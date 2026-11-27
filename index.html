@@ -621,7 +621,7 @@
           <button type="button" class="tbtn" id="importBtn" title="Load a tracker JSON dump">Import JSON</button>
           <input type="file" id="importFile" accept=".json,application/json" hidden>
           <span id="resetZone">
-            <button type="button" class="tbtn" id="resetBtn" title="Restore initial embedded dump">Reset</button>
+            <button type="button" class="tbtn" id="resetBtn" title="Clear local data">Clear</button>
           </span>
         </div>
       </div>
@@ -683,307 +683,11 @@
   (function () {
     'use strict';
 
-    /* ---------- Complete embedded dataset (2026-11-27 dump) ---------- */
+    /* ---------- Empty initial shell (no personal data in public HTML) ---------- */
     var INITIAL_DATA = {
-      "exported": "2026-11-27",
-      "weeks": [
-        {
-          "id": "w0",
-          "data": {
-            "cap": 12,
-            "days": {
-              "2026-11-09": { "am": { "k": "off", "t": "Morning gone" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-11-10": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-11-11": { "am": { "k": "exam", "t": "Exam 1" }, "pm": { "k": "exam", "t": "Exam 1 wrap-up, reports arrive" } },
-              "2026-11-12": { "am": { "k": "marking", "t": "Reports, block 1 of 4" }, "pm": { "k": "marking", "t": "Reports, block 2 of 4" } },
-              "2026-11-13": { "am": { "k": "marking", "t": "Reports, block 3 of 4" }, "pm": { "k": "marking", "t": "Reports, block 4 of 4" } },
-              "2026-11-14": { "am": { "k": "marking", "t": "Exam 1, block 1 of 6 (flex)" }, "pm": { "k": "marking", "t": "Exam 1, block 2 of 6 (flex)" } },
-              "2026-11-15": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2026-11-15",
-            "focus": "PhD afternoon and Tuesday, then reports and exam 1",
-            "n": 0,
-            "note": "Monday morning is gone, so Monday afternoon and Tuesday are the PhD blocks (4 h + 8 h). Saturday 14 Nov is a flex day for exam 1. If you skip it, exam 1 finishes Thu 19 Nov, a day after the 18 Nov target, and exam 2 finishes Mon 23 Nov.",
-            "start": "2026-11-09",
-            "tasks": {
-              "w0-01": { "done": true, "doneAt": "2026-11-09T10:48:04.233Z", "doneWhen": "Message sent", "evidence": "Meeting informally regularly anyway", "hours": 0.5, "optional": false, "order": 1, "title": "Message your supervisor to book the article-1 brief meeting for the week of 23 Nov", "track": "phd" },
-              "w0-02": { "done": true, "doneAt": "2026-11-09T10:49:57.424Z", "doneWhen": "At most one item tagged CURRENTLY READING", "evidence": "Overrride - I will finish reading all the currently reading papers and when done, I will return to only making 1 CURRENTLY_READING at a time", "hours": 1, "optional": false, "order": 2, "title": "Fix Zotero tags so only the paper you are reading is tagged CURRENTLY READING", "track": "phd" },
-              "w0-03": { "done": false, "doneAt": "", "doneWhen": "One row per dataset in your notes", "evidence": "", "hours": 2, "optional": false, "order": 3, "title": "Data audit 1: table of every dataset in the INR experiments with source, resolution, time step and accumulation window from the documentation", "track": "phd" },
-              "w0-04": { "done": false, "doneAt": "", "doneWhen": "Table or plot of correlation by lag, peak lag noted", "evidence": "", "hours": 2, "optional": false, "order": 4, "title": "Data audit 2: lagged correlation of ERA5 against CHIRPS at minus one, zero and plus one day over your region", "track": "phd" },
-              "w0-05": { "done": true, "doneAt": "2026-11-10T18:22:29.377Z", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 5, "title": "Read: Step-by-Step Diffusion, an elementary tutorial (Nakkiran et al.)", "track": "phd" },
-              "w0-06": { "done": true, "doneAt": "2026-11-22T15:09:20.760Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 6, "title": "Reports, block 1 of 4 (Thu 12 Nov, morning)", "track": "marking" },
-              "w0-07": { "done": true, "doneAt": "2026-11-22T15:09:21.224Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 7, "title": "Reports, block 2 of 4 (Thu 12 Nov, afternoon)", "track": "marking" },
-              "w0-08": { "done": true, "doneAt": "2026-11-22T15:09:21.825Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 8, "title": "Reports, block 3 of 4 (Fri 13 Nov, morning)", "track": "marking" },
-              "w0-09": { "done": true, "doneAt": "2026-11-22T15:09:22.474Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 9, "title": "Reports, block 4 of 4 (Fri 13 Nov, afternoon)", "track": "marking" },
-              "w0-10": { "done": true, "doneAt": "2026-11-22T15:09:23.285Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": true, "order": 10, "title": "Exam 1, block 1 of 6 (Sat 14 Nov, morning, flex)", "track": "marking" },
-              "w0-11": { "done": true, "doneAt": "2026-11-22T15:09:23.569Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": true, "order": 11, "title": "Exam 1, block 2 of 6 (Sat 14 Nov, afternoon, flex)", "track": "marking" },
-              "w0-12": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 12, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
-            }
-          }
-        },
-        {
-          "id": "w1",
-          "data": {
-            "cap": 4,
-            "days": {
-              "2026-11-16": { "am": { "k": "exam", "t": "Exam 2" }, "pm": { "k": "exam", "t": "Exam 2 wrap-up" } },
-              "2026-11-17": { "am": { "k": "marking", "t": "Exam 1, block 3 of 6" }, "pm": { "k": "marking", "t": "Exam 1, block 4 of 6" } },
-              "2026-11-18": { "am": { "k": "marking", "t": "Exam 1, block 5 of 6" }, "pm": { "k": "marking", "t": "Exam 1, block 6 of 6" } },
-              "2026-11-19": { "am": { "k": "marking", "t": "Exam 2, block 1 of 4" }, "pm": { "k": "marking", "t": "Exam 2, block 2 of 4" } },
-              "2026-11-20": { "am": { "k": "marking", "t": "Exam 2, block 3 of 4" }, "pm": { "k": "marking", "t": "Exam 2, block 4 of 4" } },
-              "2026-11-21": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-11-22": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2026-11-22",
-            "focus": "Marking exams 1 and 2",
-            "n": 1,
-            "note": "No full PhD days this week. The cap is evening reading only, about an hour on four evenings. Exam 2 is on Monday 16 Nov.",
-            "start": "2026-11-16",
-            "tasks": {
-              "w1-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": true, "order": 1, "title": "Read in the evenings: Denoising Diffusion Probabilistic Models (Ho et al.)", "track": "phd" },
-              "w1-02": { "done": true, "doneAt": "2026-11-22T15:09:05.456Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 2, "title": "Exam 1, block 3 of 6 (Tue 17 Nov, morning)", "track": "marking" },
-              "w1-03": { "done": true, "doneAt": "2026-11-22T15:09:06.353Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 3, "title": "Exam 1, block 4 of 6 (Tue 17 Nov, afternoon)", "track": "marking" },
-              "w1-04": { "done": true, "doneAt": "2026-11-22T15:09:06.925Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 4, "title": "Exam 1, block 5 of 6 (Wed 18 Nov, morning)", "track": "marking" },
-              "w1-05": { "done": true, "doneAt": "2026-11-22T15:09:07.435Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 5, "title": "Exam 1, block 6 of 6 (Wed 18 Nov, afternoon)", "track": "marking" },
-              "w1-06": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 6, "title": "Exam 2, block 1 of 4 (Thu 19 Nov, morning)", "track": "marking" },
-              "w1-07": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 7, "title": "Exam 2, block 2 of 4 (Thu 19 Nov, afternoon)", "track": "marking" },
-              "w1-08": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 8, "title": "Exam 2, block 3 of 4 (Fri 20 Nov, morning)", "track": "marking" },
-              "w1-09": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 9, "title": "Exam 2, block 4 of 4 (Fri 20 Nov, afternoon)", "track": "marking" },
-              "w1-10": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 10, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
-            }
-          }
-        },
-        {
-          "id": "w2",
-          "data": {
-            "cap": 40,
-            "days": {
-              "2026-11-23": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-11-24": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-11-25": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-11-26": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-11-27": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-11-28": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-11-29": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2026-11-29",
-            "focus": "Audit verdict, baselines, article brief, reading",
-            "n": 2,
-            "note": "First full PhD week. Weekends are buffer, not planned.",
-            "start": "2026-11-23",
-            "tasks": {
-              "w2-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 1, "title": "Read: Score-Based Generative Modeling through Stochastic Differential Equations (Song et al.), skim the proofs", "track": "phd" },
-              "w2-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 2, "title": "Read: Deep learning in statistical downscaling for gridded meteorological data (Sun et al. 2024)", "track": "phd" },
-              "w2-03": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 1.5, "optional": false, "order": 3, "title": "Read: DeepSD, statistical downscaling with super-resolution CNNs (Vandal et al. 2017)", "track": "phd" },
-              "w2-04": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 4, "title": "Read: A generative deep learning approach to stochastic downscaling of precipitation forecasts (Harris et al. 2022)", "track": "phd" },
-              "w2-05": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 5, "title": "Read: Residual corrective diffusion modeling for km-scale atmospheric downscaling (CorrDiff)", "track": "phd" },
-              "w2-15": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in your notes file", "evidence": "", "hours": 2.5, "optional": false, "order": 5.25, "title": "Read: Machine learning emulation of precipitation from km-scale regional climate simulations using a diffusion model (Addison et al., the CPMGEM paper)", "track": "phd" },
-              "w2-14": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in your notes file", "evidence": "", "hours": 2, "optional": false, "order": 5.5, "title": "Read: Flow Matching for Convective-Scale Precipitation Downscaling (Wetherell 2026, preprint)", "track": "phd" },
-              "w2-06": { "done": false, "doneAt": "", "doneWhen": "Baseline metrics table; commit link as evidence", "evidence": "", "hours": 2.5, "optional": false, "order": 6, "title": "Build: bilinear and small-CNN baselines on coarsened ERA5 patches", "track": "phd" },
-              "w2-07": { "done": false, "doneAt": "", "doneWhen": "Tests pass; commit link as evidence", "evidence": "", "hours": 2, "optional": false, "order": 7, "title": "Build: CRPS and rank-histogram evaluation code, tested on a toy ensemble", "track": "phd" },
-              "w2-08": { "done": false, "doneAt": "", "doneWhen": "Script rebuilds the dataset from raw files", "evidence": "", "hours": 3, "optional": false, "order": 8, "title": "Build: lock dataset v0 with a fixed region, split by year, coarsening recipe and one rebuild script", "track": "phd" },
-              "w2-09": { "done": false, "doneAt": "", "doneWhen": "Decision and reason written in your notes", "evidence": "", "hours": 1.5, "optional": false, "order": 9, "title": "Write the audit verdict and decide whether INR stays as a comparison or is parked", "track": "phd" },
-              "w2-10": { "done": false, "doneAt": "", "doneWhen": "One page written", "evidence": "", "hours": 2.5, "optional": false, "order": 10, "title": "Write the article-1 brief: question, data, baselines, claim, target journal", "track": "phd" },
-              "w2-11": { "done": false, "doneAt": "", "doneWhen": "Brief agreed or changes noted", "evidence": "", "hours": 1, "optional": false, "order": 11, "title": "Meet your supervisor and agree the brief", "track": "phd" },
-              "w2-12": { "done": false, "doneAt": "", "doneWhen": "Samples look plausible; commit link as evidence", "evidence": "", "hours": 2, "optional": true, "order": 12, "title": "Build: tiny DDPM on 2D toy data or MNIST", "track": "phd" },
-              "w2-13": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 13, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
-            }
-          }
-        },
-        {
-          "id": "w3",
-          "data": {
-            "cap": 8,
-            "days": {
-              "2026-11-30": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-01": { "am": { "k": "exam", "t": "Exam 3" }, "pm": { "k": "exam", "t": "Exam 3 wrap-up" } },
-              "2026-12-02": { "am": { "k": "marking", "t": "Exam 3, block 1 of 4" }, "pm": { "k": "marking", "t": "Exam 3, block 2 of 4" } },
-              "2026-12-03": { "am": { "k": "exam", "t": "Exam 4" }, "pm": { "k": "exam", "t": "Exam 4 wrap-up" } },
-              "2026-12-04": { "am": { "k": "marking", "t": "Exam 3, block 3 of 4" }, "pm": { "k": "marking", "t": "Exam 3, block 4 of 4" } },
-              "2026-12-05": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-06": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2026-12-06",
-            "focus": "Monday reading, then exams 3 and 4",
-            "n": 3,
-            "note": "Only Monday is a PhD day. Tuesday and Thursday are exams, Wednesday and Friday are exam 3 marking.",
-            "start": "2026-11-30",
-            "tasks": {
-              "w3-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 1, "title": "Read: Conditional diffusion models for downscaling and bias correction of Earth system model precipitation (Aich et al.)", "track": "phd" },
-              "w3-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 2, "title": "Read: Generative diffusion-based downscaling for climate (Watt and Mansfield)", "track": "phd" },
-              "w3-03": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 3, "title": "Exam 3, block 1 of 4 (Wed 2 Dec, morning)", "track": "marking" },
-              "w3-04": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 4, "title": "Exam 3, block 2 of 4 (Wed 2 Dec, afternoon)", "track": "marking" },
-              "w3-05": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 5, "title": "Exam 3, block 3 of 4 (Fri 4 Dec, morning)", "track": "marking" },
-              "w3-06": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 6, "title": "Exam 3, block 4 of 4 (Fri 4 Dec, afternoon)", "track": "marking" },
-              "w3-07": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 7, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
-            }
-          }
-        },
-        {
-          "id": "w4",
-          "data": {
-            "cap": 32,
-            "days": {
-              "2026-12-07": { "am": { "k": "marking", "t": "Exam 4, block 1 of 2" }, "pm": { "k": "marking", "t": "Exam 4, block 2 of 2" } },
-              "2026-12-08": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-09": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-10": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-11": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-12": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-13": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2026-12-13",
-            "focus": "Baselines, residual diffusion prototype, reading",
-            "n": 4,
-            "note": "Monday is exam 4 marking. Tuesday to Friday are PhD days. Weekends are buffer.",
-            "start": "2026-12-07",
-            "tasks": {
-              "w4-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 1, "title": "Read: Downscaling precipitation with a bias-informed conditional diffusion model (Lyu et al.)", "track": "phd" },
-              "w4-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 2, "title": "Read: Dynamical-generative downscaling of climate model ensembles (Lopez-Gomez et al.)", "track": "phd" },
-              "w4-03": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 3, "title": "Read: An intercomparison of generative machine learning methods for downscaling precipitation (Ward-Leikis et al.)", "track": "phd" },
-              "w4-04": { "done": false, "doneAt": "", "doneWhen": "Runs end to end; commit link as evidence", "evidence": "", "hours": 3, "optional": false, "order": 4, "title": "Build: regression U-Net on the locked dataset", "track": "phd" },
-              "w4-05": { "done": false, "doneAt": "", "doneWhen": "Test metrics in the results table", "evidence": "", "hours": 2.5, "optional": false, "order": 5, "title": "Train the regression U-Net and record test metrics", "track": "phd" },
-              "w4-06": { "done": false, "doneAt": "", "doneWhen": "Baseline in the results table", "evidence": "", "hours": 2, "optional": false, "order": 6, "title": "Build: quantile-mapping baseline", "track": "phd" },
-              "w4-07": { "done": false, "doneAt": "", "doneWhen": "Model code committed; commit link as evidence", "evidence": "", "hours": 3, "optional": false, "order": 7, "title": "Build: residual diffusion prototype, part 1 (diffusion model on the regression residual)", "track": "phd" },
-              "w4-08": { "done": false, "doneAt": "", "doneWhen": "Loss curve and a few samples saved", "evidence": "", "hours": 3, "optional": false, "order": 8, "title": "Build: residual diffusion prototype, part 2 (run end to end on a small subset)", "track": "phd" },
-              "w4-09": { "done": false, "doneAt": "", "doneWhen": "Table with metric names and definitions", "evidence": "", "hours": 2, "optional": false, "order": 9, "title": "Draft the flagship metrics table from the intercomparison protocol", "track": "phd" },
-              "w4-10": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 10, "title": "Exam 4, block 1 of 2 (Mon 7 Dec, morning)", "track": "marking" },
-              "w4-11": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 11, "title": "Exam 4, block 2 of 2 (Mon 7 Dec, afternoon)", "track": "marking" },
-              "w4-12": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 12, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
-            }
-          }
-        },
-        {
-          "id": "w5",
-          "data": {
-            "cap": 40,
-            "days": {
-              "2026-12-14": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-15": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-16": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-17": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-18": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2026-12-19": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-20": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2026-12-20",
-            "focus": "First diffusion runs and the leave gate",
-            "n": 5,
-            "note": "Last full week before the leave gate on Friday 18 Dec. Leave is earned by meeting the gate: baselines, evaluation harness and a first diffusion run done.",
-            "start": "2026-12-14",
-            "tasks": {
-              "w5-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 1, "title": "Read: Customized deep learning for precipitation bias correction and downscaling (Wang et al.)", "track": "phd" },
-              "w5-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 2, "title": "Read: Machine learning for precipitation forecast postprocessing (Zhang and Ye)", "track": "phd" },
-              "w5-03": { "done": false, "doneAt": "", "doneWhen": "Five-line note on how the forecasts were evaluated", "evidence": "", "hours": 2, "optional": false, "order": 3, "title": "Read: Evaluation of South African Weather Service forecasts, Idai and KwaZulu-Natal", "track": "phd" },
-              "w5-04": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 4, "title": "Skim: TAUT, terrain-adaptive U-Net transformer for downscaling", "track": "phd" },
-              "w5-05": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 5, "title": "Read: the Colamonaco thesis on downscaling, baseline sections", "track": "phd" },
-              "w5-06": { "done": false, "doneAt": "", "doneWhen": "Claim written in one sentence", "evidence": "", "hours": 1, "optional": false, "order": 6, "title": "Gap-log review: list the three most repeated gaps and draft one candidate article-1 claim", "track": "phd" },
-              "w5-07": { "done": false, "doneAt": "", "doneWhen": "Loss curve and samples saved", "evidence": "", "hours": 3, "optional": false, "order": 7, "title": "Build: first diffusion training run on a small subset", "track": "phd" },
-              "w5-08": { "done": false, "doneAt": "", "doneWhen": "Checkpoint saved with its config", "evidence": "", "hours": 3, "optional": false, "order": 8, "title": "Build: full diffusion training run", "track": "phd" },
-              "w5-09": { "done": false, "doneAt": "", "doneWhen": "Results table filled for every method", "evidence": "", "hours": 3, "optional": false, "order": 9, "title": "Evaluate against all baselines: RMSE, CRPS, spread-skill", "track": "phd" },
-              "w5-10": { "done": false, "doneAt": "", "doneWhen": "One command regenerates both", "evidence": "", "hours": 2, "optional": false, "order": 10, "title": "Generate the results table and one figure from a script", "track": "phd" },
-              "w5-11": { "done": false, "doneAt": "", "doneWhen": "Note sent", "evidence": "", "hours": 2, "optional": false, "order": 11, "title": "Write a one-page results-so-far note for your supervisor", "track": "phd" },
-              "w5-12": { "done": false, "doneAt": "", "doneWhen": "Pass or fail written down with evidence links", "evidence": "", "hours": 1, "optional": false, "order": 12, "title": "Leave gate check: baselines, evaluation harness and a first diffusion run all done", "track": "phd" },
-              "w5-13": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 13, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
-            }
-          }
-        },
-        {
-          "id": "w6",
-          "data": {
-            "cap": 4,
-            "days": {
-              "2026-12-21": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-22": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-23": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-24": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-25": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-26": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-27": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2026-12-27",
-            "focus": "Minimal leave week",
-            "n": 6,
-            "note": "Leave, minimal work only. One light reading task, optional. Nothing else is expected.",
-            "start": "2026-12-21",
-            "tasks": {
-              "w6-01": { "done": false, "doneAt": "", "doneWhen": "Short summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": true, "order": 1, "title": "Read one paper from the triage reading list at your own pace; add one gap-log line", "track": "phd" }
-            }
-          }
-        },
-        {
-          "id": "w7",
-          "data": {
-            "cap": 4,
-            "days": {
-              "2026-12-28": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-29": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-30": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2026-12-31": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2027-01-01": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2027-01-02": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2027-01-03": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2027-01-03",
-            "focus": "Minimal leave week",
-            "n": 7,
-            "note": "Leave, minimal work only. One light reading task and a short plan for the return on 4 Jan, both optional.",
-            "start": "2026-12-28",
-            "tasks": {
-              "w7-01": { "done": false, "doneAt": "", "doneWhen": "Short summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": true, "order": 1, "title": "Read one paper from the triage reading list; add one gap-log line", "track": "phd" },
-              "w7-02": { "done": false, "doneAt": "", "doneWhen": "Half-page note saved", "evidence": "", "hours": 1, "optional": true, "order": 2, "title": "Write a half-page plan for the week of 4 Jan from the Friday 18 Dec review notes", "track": "phd" }
-            }
-          }
-        },
-        {
-          "id": "w8",
-          "data": {
-            "cap": 40,
-            "days": {
-              "2027-01-04": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2027-01-05": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2027-01-06": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2027-01-07": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2027-01-08": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
-              "2027-01-09": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
-              "2027-01-10": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
-            },
-            "end": "2027-01-10",
-            "focus": "Back at full capacity: main experiments",
-            "n": 8,
-            "note": "Full PhD week from Monday 4 Jan. Tasks are added at the Friday review on 18 Dec, once you know how the gate went.",
-            "start": "2027-01-04",
-            "tasks": {}
-          }
-        },
-        { "id": "w9", "data": { "cap": 40, "days": {}, "end": "2027-01-17", "focus": "Main experiments and tuning", "n": 9, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-01-11", "tasks": {} } },
-        { "id": "w10", "data": { "cap": 40, "days": {}, "end": "2027-01-24", "focus": "Ablations and regional breakdown", "n": 10, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-01-18", "tasks": {} } },
-        { "id": "w11", "data": { "cap": 40, "days": {}, "end": "2027-01-31", "focus": "Freeze results", "n": 11, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-01-25", "tasks": {} } },
-        { "id": "w12", "data": { "cap": 20, "days": {}, "end": "2027-02-07", "focus": "Figures and outline", "n": 12, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-01", "tasks": {} } },
-        { "id": "w13", "data": { "cap": 20, "days": {}, "end": "2027-02-14", "focus": "Draft methods and results", "n": 13, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-08", "tasks": {} } },
-        { "id": "w14", "data": { "cap": 20, "days": {}, "end": "2027-02-21", "focus": "Draft introduction and related work", "n": 14, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-15", "tasks": {} } },
-        { "id": "w15", "data": { "cap": 20, "days": {}, "end": "2027-02-28", "focus": "Complete draft to supervisor", "n": 15, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-22", "tasks": {} } },
-        { "id": "w16", "data": { "cap": 20, "days": {}, "end": "2027-03-07", "focus": "Supervisor feedback", "n": 16, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-01", "tasks": {} } },
-        { "id": "w17", "data": { "cap": 20, "days": {}, "end": "2027-03-14", "focus": "Revisions and extra experiments", "n": 17, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-08", "tasks": {} } },
-        { "id": "w18", "data": { "cap": 20, "days": {}, "end": "2027-03-21", "focus": "Polish and journal formatting", "n": 18, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-15", "tasks": {} } },
-        { "id": "w19", "data": { "cap": 20, "days": {}, "end": "2027-03-28", "focus": "Final checks", "n": 19, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-22", "tasks": {} } },
-        { "id": "w20", "data": { "cap": 20, "days": {}, "end": "2027-04-04", "focus": "Submit by Wednesday 31 March", "n": 20, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-29", "tasks": {} } }
-      ],
-      "milestones": [
-        { "id": "m01", "data": { "date": "2026-11-18", "done": false, "title": "Five reports marked (deadline 18 Nov; planned done 13 Nov)", "track": "marking" } },
-        { "id": "m02", "data": { "date": "2026-11-18", "done": false, "title": "Exam 1 marked (due about a week after the exam; confirm)", "track": "marking" } },
-        { "id": "m03", "data": { "date": "2026-11-20", "done": false, "title": "Exam 2 marked (due about 23 Nov; confirm)", "track": "marking" } },
-        { "id": "m04", "data": { "date": "2026-11-27", "done": false, "title": "Data audit finished and article-1 brief agreed with supervisor", "track": "phd" } },
-        { "id": "m05", "data": { "date": "2026-12-07", "done": false, "title": "Exam 3 marked by Fri 4 Dec (deadline 6 Dec); exam 4 marked by Mon 7 Dec (deadline 8 Dec)", "track": "marking" } },
-        { "id": "m06", "data": { "date": "2026-12-18", "done": false, "title": "Leave gate: baselines, evaluation harness and a first diffusion run done", "track": "phd" } },
-        { "id": "m07", "data": { "date": "2027-01-29", "done": false, "title": "Main experiments done; results frozen", "track": "phd" } },
-        { "id": "m08", "data": { "date": "2027-02-26", "done": false, "title": "Full draft with supervisor", "track": "phd" } },
-        { "id": "m09", "data": { "date": "2027-03-31", "done": false, "title": "Article 1 submitted", "track": "phd" } },
-        { "id": "m10", "data": { "date": "2027-06-30", "done": false, "title": "Article 1 accepted (target; typically 2 to 4 months after submission)", "track": "phd" } },
-        { "id": "m11", "data": { "date": "2027-07-31", "done": false, "title": "Article 2 submitted (latest: end of August 2027)", "track": "phd" } },
-        { "id": "m12", "data": { "date": "2027-11-30", "done": false, "title": "Article 3 submitted (under review is enough)", "track": "phd" } },
-        { "id": "m13", "data": { "date": "2027-12-15", "done": false, "title": "Articles 1 and 2 accepted; PhD complete", "track": "phd" } }
-      ]
+      "exported": "",
+      "weeks": [],
+      "milestones": []
     };
 
     var STORAGE_KEY = 'article_one_tracker_v1';
@@ -1660,11 +1364,11 @@
           type: 'button',
           class: 'tbtn',
           'data-reset-ask': '1',
-          title: 'Restore initial embedded dump'
-        }, [document.createTextNode('Reset')]));
+          title: 'Clear local data'
+        }, [document.createTextNode('Clear')]));
       } else {
         resetZone.appendChild(el('span', { class: 'reset-confirm' }, [
-          el('button', { type: 'button', class: 'tbtn danger', 'data-reset-confirm': '1', text: 'Confirm reset?' }),
+          el('button', { type: 'button', class: 'tbtn danger', 'data-reset-confirm': '1', text: 'Clear local?' }),
           el('button', { type: 'button', class: 'tbtn', 'data-reset-cancel': '1', text: 'Cancel' })
         ]));
       }
@@ -1687,12 +1391,11 @@
         state.moving = null;
         state.addingTask = false;
         state.confirmingReset = false;
-        state.week = currentWeekN();
-        state.scrollTab = true;
-        persistChange();
+        state.week = null;
+        saveLocal();
         renderResetZone();
         render();
-        say('Restored initial 2026-11-27 dump.');
+        say('Cleared local browser data. Your private Gist was not modified.');
       }
     });
 
@@ -2320,16 +2023,31 @@
 
       renderFacts();
       var frag = document.createDocumentFragment();
-      var sw = el('div', { class: 'switch', role: 'group', 'aria-label': 'View' }, [
-        el('button', { type: 'button', 'data-view': 'weeks', 'aria-pressed': state.view === 'weeks' ? 'true' : 'false', text: 'Weeks' }),
-        el('button', { type: 'button', 'data-view': 'schedule', 'aria-pressed': state.view === 'schedule' ? 'true' : 'false', text: 'Schedule' }),
-        el('button', { type: 'button', 'data-view': 'milestones', 'aria-pressed': state.view === 'milestones' ? 'true' : 'false', text: 'Milestones' })
-      ]);
-      frag.appendChild(sw);
 
-      if (state.view === 'weeks') renderWeeksView(frag);
-      else if (state.view === 'schedule') renderSchedule(frag);
-      else renderMilestones(frag);
+      if (!state.weeks.length && !state.milestones.length) {
+        frag.appendChild(el('div', { class: 'empty' }, [
+          el('h2', { text: 'No plan loaded' }),
+          el('p', {
+            class: 'sub',
+            text: 'This page contains no embedded personal data. Connect your private GitHub Gist to pull your tracker, or import a JSON backup on your first device.'
+          }),
+          el('div', { class: 'modal-actions' }, [
+            el('button', { type: 'button', class: 'tbtn primary', 'data-open-sync': '1', text: 'Connect GitHub Gist' }),
+            el('button', { type: 'button', class: 'tbtn', 'data-open-import': '1', text: 'Import JSON' })
+          ])
+        ]));
+      } else {
+        var sw = el('div', { class: 'switch', role: 'group', 'aria-label': 'View' }, [
+          el('button', { type: 'button', 'data-view': 'weeks', 'aria-pressed': state.view === 'weeks' ? 'true' : 'false', text: 'Weeks' }),
+          el('button', { type: 'button', 'data-view': 'schedule', 'aria-pressed': state.view === 'schedule' ? 'true' : 'false', text: 'Schedule' }),
+          el('button', { type: 'button', 'data-view': 'milestones', 'aria-pressed': state.view === 'milestones' ? 'true' : 'false', text: 'Milestones' })
+        ]);
+        frag.appendChild(sw);
+
+        if (state.view === 'weeks') renderWeeksView(frag);
+        else if (state.view === 'schedule') renderSchedule(frag);
+        else renderMilestones(frag);
+      }
 
       app.textContent = '';
       var holder = el('div', { style: 'display:grid;gap:20px' });
@@ -2357,9 +2075,18 @@
     /* ---------- Delegated events ---------- */
     app.addEventListener('click', function (e) {
       var t = e.target.closest
-        ? e.target.closest('[data-toggle],[data-tab],[data-view],[data-ms],[data-move],[data-reason],[data-cancelmove],[data-add-open],[data-add-cancel]')
+        ? e.target.closest('[data-toggle],[data-tab],[data-view],[data-ms],[data-move],[data-reason],[data-cancelmove],[data-add-open],[data-add-cancel],[data-open-sync],[data-open-import]')
         : null;
       if (!t) return;
+      if (t.hasAttribute('data-open-sync')) {
+        openSyncModal();
+        return;
+      }
+      if (t.hasAttribute('data-open-import')) {
+        importFile.value = '';
+        importFile.click();
+        return;
+      }
       if (t.hasAttribute('data-toggle')) {
         toggleTask(t.getAttribute('data-week'), t.getAttribute('data-toggle'));
         return;
