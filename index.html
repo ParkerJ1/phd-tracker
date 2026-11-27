@@ -1,0 +1,2470 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Article One Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+  <style>
+    /* Layout: one working column. Hours gauge on top, weeks as tabs, a day-by-day AM/PM strip, then tasks grouped by track.
+       Color: cool chart-paper neutrals; marine for the PhD track, plum for marking, ochre for income, slate for review and exams. */
+    :root {
+      color-scheme: light;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      --bg: #EDF2F4;
+      --surface: #FFFFFF;
+      --surface2: #E1EAEE;
+      --ink: #14252D;
+      --ink2: #4B606A;
+      --line: #C6D4DA;
+      --tick: #9FB3BC;
+      --phd: #0B5D80;
+      --phd-soft: #CFE4EE;
+      --mark: #8C3B63;
+      --mark-soft: #EBD3DF;
+      --income: #A8650F;
+      --income-soft: #F1DFC2;
+      --review: #55646C;
+      --review-soft: #D9E1E5;
+      --good: #23704A;
+      --bad: #B3372F;
+      --font-body: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-data: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0D1A20;
+        --surface: #15252D;
+        --surface2: #1C303A;
+        --ink: #E3EEF2;
+        --ink2: #93A9B3;
+        --line: #2A414C;
+        --tick: #46606C;
+        --phd: #62B7DE;
+        --phd-soft: #16374A;
+        --mark: #D98BB1;
+        --mark-soft: #3C2230;
+        --income: #E0A24F;
+        --income-soft: #3A2C15;
+        --review: #9FB0B8;
+        --review-soft: #223640;
+        --good: #5DBB85;
+        --bad: #F08A82;
+        color-scheme: dark;
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #0D1A20;
+      --surface: #15252D;
+      --surface2: #1C303A;
+      --ink: #E3EEF2;
+      --ink2: #93A9B3;
+      --line: #2A414C;
+      --tick: #46606C;
+      --phd: #62B7DE;
+      --phd-soft: #16374A;
+      --mark: #D98BB1;
+      --mark-soft: #3C2230;
+      --income: #E0A24F;
+      --income-soft: #3A2C15;
+      --review: #9FB0B8;
+      --review-soft: #223640;
+      --good: #5DBB85;
+      --bad: #F08A82;
+      color-scheme: dark;
+    }
+
+    html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+    * { box-sizing: border-box; }
+    [hidden]:not([hidden=until-found i]) { display: none !important; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.45;
+      padding-inline: 16px;
+      padding-block: 20px 64px;
+    }
+
+    .wrap { max-width: 860px; margin-inline: auto; display: grid; gap: 20px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+    h2 { font-size: 1.15rem; font-weight: 650; text-wrap: balance; }
+    .sub { color: var(--ink2); }
+    .mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+    button, input, select { font: inherit; color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid var(--phd);
+      outline-offset: 2px;
+    }
+
+    /* Header, toolbar, and summary facts */
+    .top { display: grid; gap: 14px; }
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px 16px;
+    }
+    .top-titles { display: grid; gap: 4px; }
+    .eyebrow {
+      font-family: var(--font-data);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink2);
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .tbtn {
+      min-height: 36px;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--ink2);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .tbtn:hover { border-color: var(--ink); color: var(--ink); }
+    .tbtn.danger { color: var(--bad); border-color: var(--bad); }
+    .tbtn.danger:hover { background: var(--bad); color: var(--bg); }
+    .reset-confirm {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--bad);
+    }
+
+    /* GitHub Sync status pill & modal */
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--tick);
+      flex: none;
+    }
+    .sync-dot.synced { background: var(--good); }
+    .sync-dot.syncing { background: var(--phd); animation: pulse 1.1s ease-in-out infinite; }
+    .sync-dot.error { background: var(--bad); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 26, 32, 0.58);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      z-index: 40;
+    }
+    .modal {
+      width: 100%;
+      max-width: 520px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal-head h2 { font-size: 1.1rem; }
+    .sync-banner {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+    }
+    .sync-banner .mono { font-size: 0.8rem; color: var(--ink2); overflow-wrap: anywhere; }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .input-row input { flex: 1; min-width: 0; }
+    .helper {
+      font-size: 0.8rem;
+      color: var(--ink2);
+      line-height: 1.4;
+    }
+    .helper code {
+      font-family: var(--font-data);
+      font-size: 0.78rem;
+      background: var(--surface2);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding-top: 4px;
+    }
+    .tbtn.primary {
+      background: var(--phd);
+      border-color: var(--phd);
+      color: var(--bg);
+      font-weight: 600;
+    }
+    .tbtn.primary:hover { filter: brightness(1.08); color: var(--bg); border-color: var(--phd); }
+    .tbtn:disabled, .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .facts { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+    .fact { display: grid; gap: 2px; min-width: 0; }
+    .fact b { font-family: var(--font-data); font-size: 1.35rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+    .fact span { color: var(--ink2); font-size: 0.85rem; }
+
+    /* Hours gauge */
+    .gauge {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .gauge-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
+    .gauge-track { position: relative; height: 24px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+    .gauge-planned, .gauge-done { position: absolute; inset-block: 0; left: 0; }
+    .gauge-planned { background: var(--phd-soft); }
+    .gauge-done { background: var(--phd); }
+    .gauge-ticks {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image: repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc(var(--unit) - 1px),
+        var(--tick) calc(var(--unit) - 1px),
+        var(--tick) var(--unit)
+      );
+    }
+    .gauge-scale { position: relative; height: 18px; font-family: var(--font-data); font-size: 0.75rem; color: var(--ink2); }
+    .gauge-scale span { position: absolute; top: 0; transform: translateX(-50%); }
+    .gauge-scale span.first { transform: none; }
+    .gauge-scale span.last { transform: translateX(-100%); }
+    .over { color: var(--bad); font-weight: 600; }
+
+    /* View switch and week tabs */
+    .switch {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-self: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .switch button { border: 0; background: transparent; padding: 10px 16px; min-height: 44px; cursor: pointer; font-weight: 500; }
+    .switch button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+    .tab {
+      flex: none;
+      min-width: 74px;
+      min-height: 56px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      display: grid;
+      gap: 1px;
+    }
+    .tab .n { font-weight: 650; }
+    .tab .d { font-family: var(--font-data); font-size: 0.72rem; color: var(--ink2); }
+    .tab .p { font-family: var(--font-data); font-size: 0.72rem; color: var(--ink2); white-space: nowrap; }
+    .tab[aria-selected="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+    .tab.now .n::after { content: " now"; font-weight: 500; font-size: 0.72rem; color: var(--phd); }
+
+    /* Week body and task groups */
+    .weekhead { display: grid; gap: 4px; }
+    .note { color: var(--ink2); max-width: 70ch; }
+    .group { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .group-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--surface2);
+    }
+    .group-head h3 { font-size: 0.95rem; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--phd); }
+    .t-marking .dot { background: var(--mark); }
+    .t-income .dot { background: var(--income); }
+    .t-review .dot { background: var(--review); }
+    .group-head .mono { font-size: 0.8rem; color: var(--ink2); }
+
+    .task {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      gap: 4px 10px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+      align-items: start;
+    }
+    .task:first-of-type { border-top: 0; }
+    .check {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      margin: -6px 0 -6px -6px;
+    }
+    .check i {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 2px solid var(--ink2);
+      display: grid;
+      place-items: center;
+      background: var(--surface);
+    }
+    .check svg { width: 18px; height: 18px; opacity: 0; stroke: var(--bg); }
+    .check[aria-checked="true"] i { background: var(--phd); border-color: var(--phd); }
+    .t-marking .check[aria-checked="true"] i { background: var(--mark); border-color: var(--mark); }
+    .t-income .check[aria-checked="true"] i { background: var(--income); border-color: var(--income); }
+    .t-review .check[aria-checked="true"] i { background: var(--review); border-color: var(--review); }
+    .check[aria-checked="true"] svg { opacity: 1; }
+
+    .tbody { min-width: 0; display: grid; gap: 4px; }
+    .ttitle { font-weight: 500; font-size: 1.02rem; overflow-wrap: anywhere; }
+    .task.done .ttitle { color: var(--ink2); text-decoration: line-through; text-decoration-thickness: 1px; }
+    .tmeta { color: var(--ink2); font-size: 0.86rem; overflow-wrap: anywhere; }
+    .tag {
+      font-family: var(--font-data);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 6px;
+      margin-left: 8px;
+      color: var(--ink2);
+      vertical-align: 2px;
+      white-space: nowrap;
+    }
+    .hrs { font-family: var(--font-data); font-variant-numeric: tabular-nums; color: var(--ink2); padding-top: 3px; white-space: nowrap; }
+    .evidence {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: var(--bg);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.92rem;
+    }
+    .evidence.needs { border-style: dashed; }
+    .evidence::placeholder { color: var(--ink2); }
+    .doneat { font-family: var(--font-data); font-size: 0.74rem; color: var(--ink2); }
+
+    .linkbtn {
+      justify-self: start;
+      min-height: 44px;
+      padding: 0 2px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      color: var(--phd);
+      font-size: 0.88rem;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .reasons { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+    .reasons .lab { width: 100%; font-size: 0.86rem; color: var(--ink2); }
+    .reason {
+      min-height: 44px;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.88rem;
+    }
+    .reason:hover { border-color: var(--ink); }
+
+    .moved {
+      background: var(--surface);
+      border: 1px dashed var(--tick);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: grid;
+      gap: 6px;
+    }
+    .moved h3 { font-size: 0.95rem; font-weight: 650; }
+    .moved p { color: var(--ink2); font-size: 0.9rem; overflow-wrap: anywhere; }
+
+    /* Add task panel */
+    .add-wrap { display: grid; gap: 10px; }
+    .add-trigger {
+      justify-self: start;
+      min-height: 44px;
+      padding: 8px 14px;
+      border: 1px dashed var(--tick);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--ink2);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .add-trigger:hover { border-color: var(--ink); color: var(--ink); }
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .add-form h3 { font-size: 0.98rem; font-weight: 650; }
+    .form-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .field { display: grid; gap: 4px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 0.82rem; font-weight: 500; color: var(--ink2); }
+    .field input[type="text"],
+    .field input[type="password"],
+    .field input[type="number"],
+    .field select {
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--ink);
+      width: 100%;
+    }
+    .field-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      font-size: 0.9rem;
+      color: var(--ink2);
+      cursor: pointer;
+    }
+    .field-check input { width: 18px; height: 18px; accent-color: var(--phd); }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .btn-primary {
+      min-height: 42px;
+      padding: 8px 16px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--phd);
+      color: var(--bg);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+
+    /* Day-by-day strip */
+    .days { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .drow {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr) minmax(0, 1fr);
+      gap: 6px;
+      padding: 8px 10px;
+      border-top: 1px solid var(--line);
+      align-items: stretch;
+    }
+    .drow:first-child { border-top: 0; }
+    .drow.today { background: var(--surface2); }
+    .dlabel { font-family: var(--font-data); font-size: 0.78rem; line-height: 1.3; padding-top: 6px; color: var(--ink2); }
+    .dlabel b { display: block; font-weight: 500; font-size: 0.9rem; color: var(--ink); }
+    .dcell { border-radius: 6px; padding: 6px 8px; font-size: 0.84rem; line-height: 1.3; min-width: 0; overflow-wrap: anywhere; }
+    .dcell small {
+      display: block;
+      font-family: var(--font-data);
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink2);
+    }
+    .k-phd { background: var(--phd-soft); }
+    .k-marking { background: var(--mark-soft); }
+    .k-exam { background: var(--review-soft); }
+    .k-off { border: 1px dashed var(--line); color: var(--ink2); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 0.84rem; color: var(--ink2); }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+    .legend .k-off { border: 1px dashed var(--ink2); }
+    .wkhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+
+    /* Milestones */
+    .mlist { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .myear {
+      padding: 8px 14px;
+      background: var(--surface2);
+      font-family: var(--font-data);
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      color: var(--ink2);
+    }
+    .mrow {
+      display: grid;
+      grid-template-columns: 44px 84px minmax(0, 1fr) auto;
+      gap: 8px 10px;
+      padding: 10px 14px;
+      border-top: 1px solid var(--line);
+      align-items: center;
+    }
+    .mrow:first-of-type { border-top: 0; }
+    .mrow .mdate { font-family: var(--font-data); font-size: 0.85rem; }
+    .mrow .mtitle { overflow-wrap: anywhere; }
+    .mrow.done .mtitle { color: var(--ink2); text-decoration: line-through; text-decoration-thickness: 1px; }
+    .chip {
+      font-family: var(--font-data);
+      font-size: 0.74rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 10px;
+      white-space: nowrap;
+      color: var(--ink2);
+    }
+    .chip.ok { color: var(--good); border-color: var(--good); }
+    .chip.late { color: var(--bad); border-color: var(--bad); }
+
+    @media (max-width: 560px) {
+      .mrow { grid-template-columns: 44px minmax(0, 1fr); }
+      .mrow .mdate { grid-column: 2; }
+      .mrow .mtitle { grid-column: 2; }
+      .mrow .chip { grid-column: 2; justify-self: start; }
+      .drow { grid-template-columns: 68px minmax(0, 1fr) minmax(0, 1fr); }
+    }
+
+    /* Empty state and toast status */
+    .empty {
+      background: var(--surface);
+      border: 1px dashed var(--tick);
+      border-radius: 10px;
+      padding: 24px 18px;
+      display: grid;
+      gap: 8px;
+    }
+    .status {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      max-width: 860px;
+      margin-inline: auto;
+      background: var(--ink);
+      color: var(--bg);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.92rem;
+      z-index: 20;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .gauge-planned, .gauge-done { transition: width 0.25s ease; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="root">
+    <header class="top">
+      <div class="top-bar">
+        <div class="top-titles">
+          <p class="eyebrow">PhD by publication, target December 2027</p>
+          <h1>Article One Tracker</h1>
+        </div>
+        <div class="toolbar" id="toolbar" aria-label="Tracker controls">
+          <button type="button" class="tbtn" id="syncBtn" title="Configure private GitHub Gist sync">
+            <i class="sync-dot" id="syncDot" aria-hidden="true"></i>
+            <span id="syncLabel">Sync: Local</span>
+          </button>
+          <button type="button" class="tbtn" id="themeBtn" title="Toggle light or dark theme">Theme</button>
+          <button type="button" class="tbtn" id="exportBtn" title="Download current plan as JSON">Export JSON</button>
+          <button type="button" class="tbtn" id="importBtn" title="Load a tracker JSON dump">Import JSON</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+          <span id="resetZone">
+            <button type="button" class="tbtn" id="resetBtn" title="Restore initial embedded dump">Reset</button>
+          </span>
+        </div>
+      </div>
+      <div class="facts" id="facts"></div>
+    </header>
+
+    <main id="app" aria-live="polite"></main>
+  </div>
+
+  <div class="status" id="status" role="status" hidden></div>
+
+  <!-- GitHub Gist Sync Modal -->
+  <div class="modal-backdrop" id="syncModal" hidden role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="syncModalTitle">GitHub Gist Sync</h2>
+        <button type="button" class="tbtn" id="syncCloseBtn" aria-label="Close sync settings">Close</button>
+      </div>
+
+      <div class="sync-banner" id="syncBanner">
+        <i class="sync-dot" id="modalSyncDot" aria-hidden="true"></i>
+        <div>
+          <div id="syncBannerText">Not connected (local only)</div>
+          <div class="mono" id="syncBannerMeta"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="syncTokenInput">GitHub Personal Access Token</label>
+        <div class="input-row">
+          <input id="syncTokenInput" type="password" placeholder="ghp_... or github_pat_..." autocomplete="off" spellcheck="false">
+          <button type="button" class="tbtn" id="toggleTokenBtn" aria-pressed="false">Show</button>
+        </div>
+        <p class="helper">Needs <code>gist</code> scope (classic token) or Account &rarr; Gists: Read &amp; Write (fine-grained). Stored only in this browser.</p>
+      </div>
+
+      <div class="field">
+        <label for="syncGistInput">Gist ID</label>
+        <div class="input-row">
+          <input id="syncGistInput" type="text" placeholder="Leave blank to create a new private Gist" autocomplete="off" spellcheck="false">
+          <button type="button" class="tbtn" id="copyGistBtn" hidden>Copy ID</button>
+        </div>
+        <p class="helper">On your first device, leave blank to create a private Gist. Paste the same Gist ID on your second device to sync.</p>
+      </div>
+
+      <div class="modal-actions" id="syncConnectActions">
+        <button type="button" class="tbtn primary" id="syncPrimaryActionBtn">Create Private Gist &amp; Connect</button>
+      </div>
+
+      <div class="modal-actions" id="syncConnectedActions" hidden>
+        <button type="button" class="tbtn" id="pullNowBtn">Pull Now</button>
+        <button type="button" class="tbtn" id="pushNowBtn">Push Now</button>
+        <button type="button" class="tbtn danger" id="disconnectSyncBtn">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ---------- Complete embedded dataset (2026-11-27 dump) ---------- */
+    var INITIAL_DATA = {
+      "exported": "2026-11-27",
+      "weeks": [
+        {
+          "id": "w0",
+          "data": {
+            "cap": 12,
+            "days": {
+              "2026-11-09": { "am": { "k": "off", "t": "Morning gone" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-11-10": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-11-11": { "am": { "k": "exam", "t": "Exam 1" }, "pm": { "k": "exam", "t": "Exam 1 wrap-up, reports arrive" } },
+              "2026-11-12": { "am": { "k": "marking", "t": "Reports, block 1 of 4" }, "pm": { "k": "marking", "t": "Reports, block 2 of 4" } },
+              "2026-11-13": { "am": { "k": "marking", "t": "Reports, block 3 of 4" }, "pm": { "k": "marking", "t": "Reports, block 4 of 4" } },
+              "2026-11-14": { "am": { "k": "marking", "t": "Exam 1, block 1 of 6 (flex)" }, "pm": { "k": "marking", "t": "Exam 1, block 2 of 6 (flex)" } },
+              "2026-11-15": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2026-11-15",
+            "focus": "PhD afternoon and Tuesday, then reports and exam 1",
+            "n": 0,
+            "note": "Monday morning is gone, so Monday afternoon and Tuesday are the PhD blocks (4 h + 8 h). Saturday 14 Nov is a flex day for exam 1. If you skip it, exam 1 finishes Thu 19 Nov, a day after the 18 Nov target, and exam 2 finishes Mon 23 Nov.",
+            "start": "2026-11-09",
+            "tasks": {
+              "w0-01": { "done": true, "doneAt": "2026-11-09T10:48:04.233Z", "doneWhen": "Message sent", "evidence": "Meeting informally regularly anyway", "hours": 0.5, "optional": false, "order": 1, "title": "Message your supervisor to book the article-1 brief meeting for the week of 23 Nov", "track": "phd" },
+              "w0-02": { "done": true, "doneAt": "2026-11-09T10:49:57.424Z", "doneWhen": "At most one item tagged CURRENTLY READING", "evidence": "Overrride - I will finish reading all the currently reading papers and when done, I will return to only making 1 CURRENTLY_READING at a time", "hours": 1, "optional": false, "order": 2, "title": "Fix Zotero tags so only the paper you are reading is tagged CURRENTLY READING", "track": "phd" },
+              "w0-03": { "done": false, "doneAt": "", "doneWhen": "One row per dataset in your notes", "evidence": "", "hours": 2, "optional": false, "order": 3, "title": "Data audit 1: table of every dataset in the INR experiments with source, resolution, time step and accumulation window from the documentation", "track": "phd" },
+              "w0-04": { "done": false, "doneAt": "", "doneWhen": "Table or plot of correlation by lag, peak lag noted", "evidence": "", "hours": 2, "optional": false, "order": 4, "title": "Data audit 2: lagged correlation of ERA5 against CHIRPS at minus one, zero and plus one day over your region", "track": "phd" },
+              "w0-05": { "done": true, "doneAt": "2026-11-10T18:22:29.377Z", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 5, "title": "Read: Step-by-Step Diffusion, an elementary tutorial (Nakkiran et al.)", "track": "phd" },
+              "w0-06": { "done": true, "doneAt": "2026-11-22T15:09:20.760Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 6, "title": "Reports, block 1 of 4 (Thu 12 Nov, morning)", "track": "marking" },
+              "w0-07": { "done": true, "doneAt": "2026-11-22T15:09:21.224Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 7, "title": "Reports, block 2 of 4 (Thu 12 Nov, afternoon)", "track": "marking" },
+              "w0-08": { "done": true, "doneAt": "2026-11-22T15:09:21.825Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 8, "title": "Reports, block 3 of 4 (Fri 13 Nov, morning)", "track": "marking" },
+              "w0-09": { "done": true, "doneAt": "2026-11-22T15:09:22.474Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 9, "title": "Reports, block 4 of 4 (Fri 13 Nov, afternoon)", "track": "marking" },
+              "w0-10": { "done": true, "doneAt": "2026-11-22T15:09:23.285Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": true, "order": 10, "title": "Exam 1, block 1 of 6 (Sat 14 Nov, morning, flex)", "track": "marking" },
+              "w0-11": { "done": true, "doneAt": "2026-11-22T15:09:23.569Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": true, "order": 11, "title": "Exam 1, block 2 of 6 (Sat 14 Nov, afternoon, flex)", "track": "marking" },
+              "w0-12": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 12, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
+            }
+          }
+        },
+        {
+          "id": "w1",
+          "data": {
+            "cap": 4,
+            "days": {
+              "2026-11-16": { "am": { "k": "exam", "t": "Exam 2" }, "pm": { "k": "exam", "t": "Exam 2 wrap-up" } },
+              "2026-11-17": { "am": { "k": "marking", "t": "Exam 1, block 3 of 6" }, "pm": { "k": "marking", "t": "Exam 1, block 4 of 6" } },
+              "2026-11-18": { "am": { "k": "marking", "t": "Exam 1, block 5 of 6" }, "pm": { "k": "marking", "t": "Exam 1, block 6 of 6" } },
+              "2026-11-19": { "am": { "k": "marking", "t": "Exam 2, block 1 of 4" }, "pm": { "k": "marking", "t": "Exam 2, block 2 of 4" } },
+              "2026-11-20": { "am": { "k": "marking", "t": "Exam 2, block 3 of 4" }, "pm": { "k": "marking", "t": "Exam 2, block 4 of 4" } },
+              "2026-11-21": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-11-22": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2026-11-22",
+            "focus": "Marking exams 1 and 2",
+            "n": 1,
+            "note": "No full PhD days this week. The cap is evening reading only, about an hour on four evenings. Exam 2 is on Monday 16 Nov.",
+            "start": "2026-11-16",
+            "tasks": {
+              "w1-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": true, "order": 1, "title": "Read in the evenings: Denoising Diffusion Probabilistic Models (Ho et al.)", "track": "phd" },
+              "w1-02": { "done": true, "doneAt": "2026-11-22T15:09:05.456Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 2, "title": "Exam 1, block 3 of 6 (Tue 17 Nov, morning)", "track": "marking" },
+              "w1-03": { "done": true, "doneAt": "2026-11-22T15:09:06.353Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 3, "title": "Exam 1, block 4 of 6 (Tue 17 Nov, afternoon)", "track": "marking" },
+              "w1-04": { "done": true, "doneAt": "2026-11-22T15:09:06.925Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 4, "title": "Exam 1, block 5 of 6 (Wed 18 Nov, morning)", "track": "marking" },
+              "w1-05": { "done": true, "doneAt": "2026-11-22T15:09:07.435Z", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 5, "title": "Exam 1, block 6 of 6 (Wed 18 Nov, afternoon)", "track": "marking" },
+              "w1-06": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 6, "title": "Exam 2, block 1 of 4 (Thu 19 Nov, morning)", "track": "marking" },
+              "w1-07": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 7, "title": "Exam 2, block 2 of 4 (Thu 19 Nov, afternoon)", "track": "marking" },
+              "w1-08": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 8, "title": "Exam 2, block 3 of 4 (Fri 20 Nov, morning)", "track": "marking" },
+              "w1-09": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 9, "title": "Exam 2, block 4 of 4 (Fri 20 Nov, afternoon)", "track": "marking" },
+              "w1-10": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 10, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
+            }
+          }
+        },
+        {
+          "id": "w2",
+          "data": {
+            "cap": 40,
+            "days": {
+              "2026-11-23": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-11-24": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-11-25": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-11-26": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-11-27": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-11-28": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-11-29": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2026-11-29",
+            "focus": "Audit verdict, baselines, article brief, reading",
+            "n": 2,
+            "note": "First full PhD week. Weekends are buffer, not planned.",
+            "start": "2026-11-23",
+            "tasks": {
+              "w2-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 1, "title": "Read: Score-Based Generative Modeling through Stochastic Differential Equations (Song et al.), skim the proofs", "track": "phd" },
+              "w2-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 2, "title": "Read: Deep learning in statistical downscaling for gridded meteorological data (Sun et al. 2024)", "track": "phd" },
+              "w2-03": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 1.5, "optional": false, "order": 3, "title": "Read: DeepSD, statistical downscaling with super-resolution CNNs (Vandal et al. 2017)", "track": "phd" },
+              "w2-04": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 4, "title": "Read: A generative deep learning approach to stochastic downscaling of precipitation forecasts (Harris et al. 2022)", "track": "phd" },
+              "w2-05": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 5, "title": "Read: Residual corrective diffusion modeling for km-scale atmospheric downscaling (CorrDiff)", "track": "phd" },
+              "w2-15": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in your notes file", "evidence": "", "hours": 2.5, "optional": false, "order": 5.25, "title": "Read: Machine learning emulation of precipitation from km-scale regional climate simulations using a diffusion model (Addison et al., the CPMGEM paper)", "track": "phd" },
+              "w2-14": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in your notes file", "evidence": "", "hours": 2, "optional": false, "order": 5.5, "title": "Read: Flow Matching for Convective-Scale Precipitation Downscaling (Wetherell 2026, preprint)", "track": "phd" },
+              "w2-06": { "done": false, "doneAt": "", "doneWhen": "Baseline metrics table; commit link as evidence", "evidence": "", "hours": 2.5, "optional": false, "order": 6, "title": "Build: bilinear and small-CNN baselines on coarsened ERA5 patches", "track": "phd" },
+              "w2-07": { "done": false, "doneAt": "", "doneWhen": "Tests pass; commit link as evidence", "evidence": "", "hours": 2, "optional": false, "order": 7, "title": "Build: CRPS and rank-histogram evaluation code, tested on a toy ensemble", "track": "phd" },
+              "w2-08": { "done": false, "doneAt": "", "doneWhen": "Script rebuilds the dataset from raw files", "evidence": "", "hours": 3, "optional": false, "order": 8, "title": "Build: lock dataset v0 with a fixed region, split by year, coarsening recipe and one rebuild script", "track": "phd" },
+              "w2-09": { "done": false, "doneAt": "", "doneWhen": "Decision and reason written in your notes", "evidence": "", "hours": 1.5, "optional": false, "order": 9, "title": "Write the audit verdict and decide whether INR stays as a comparison or is parked", "track": "phd" },
+              "w2-10": { "done": false, "doneAt": "", "doneWhen": "One page written", "evidence": "", "hours": 2.5, "optional": false, "order": 10, "title": "Write the article-1 brief: question, data, baselines, claim, target journal", "track": "phd" },
+              "w2-11": { "done": false, "doneAt": "", "doneWhen": "Brief agreed or changes noted", "evidence": "", "hours": 1, "optional": false, "order": 11, "title": "Meet your supervisor and agree the brief", "track": "phd" },
+              "w2-12": { "done": false, "doneAt": "", "doneWhen": "Samples look plausible; commit link as evidence", "evidence": "", "hours": 2, "optional": true, "order": 12, "title": "Build: tiny DDPM on 2D toy data or MNIST", "track": "phd" },
+              "w2-13": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 13, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
+            }
+          }
+        },
+        {
+          "id": "w3",
+          "data": {
+            "cap": 8,
+            "days": {
+              "2026-11-30": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-01": { "am": { "k": "exam", "t": "Exam 3" }, "pm": { "k": "exam", "t": "Exam 3 wrap-up" } },
+              "2026-12-02": { "am": { "k": "marking", "t": "Exam 3, block 1 of 4" }, "pm": { "k": "marking", "t": "Exam 3, block 2 of 4" } },
+              "2026-12-03": { "am": { "k": "exam", "t": "Exam 4" }, "pm": { "k": "exam", "t": "Exam 4 wrap-up" } },
+              "2026-12-04": { "am": { "k": "marking", "t": "Exam 3, block 3 of 4" }, "pm": { "k": "marking", "t": "Exam 3, block 4 of 4" } },
+              "2026-12-05": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-06": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2026-12-06",
+            "focus": "Monday reading, then exams 3 and 4",
+            "n": 3,
+            "note": "Only Monday is a PhD day. Tuesday and Thursday are exams, Wednesday and Friday are exam 3 marking.",
+            "start": "2026-11-30",
+            "tasks": {
+              "w3-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 1, "title": "Read: Conditional diffusion models for downscaling and bias correction of Earth system model precipitation (Aich et al.)", "track": "phd" },
+              "w3-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 2, "title": "Read: Generative diffusion-based downscaling for climate (Watt and Mansfield)", "track": "phd" },
+              "w3-03": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 3, "title": "Exam 3, block 1 of 4 (Wed 2 Dec, morning)", "track": "marking" },
+              "w3-04": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 4, "title": "Exam 3, block 2 of 4 (Wed 2 Dec, afternoon)", "track": "marking" },
+              "w3-05": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 5, "title": "Exam 3, block 3 of 4 (Fri 4 Dec, morning)", "track": "marking" },
+              "w3-06": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 6, "title": "Exam 3, block 4 of 4 (Fri 4 Dec, afternoon)", "track": "marking" },
+              "w3-07": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 7, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
+            }
+          }
+        },
+        {
+          "id": "w4",
+          "data": {
+            "cap": 32,
+            "days": {
+              "2026-12-07": { "am": { "k": "marking", "t": "Exam 4, block 1 of 2" }, "pm": { "k": "marking", "t": "Exam 4, block 2 of 2" } },
+              "2026-12-08": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-09": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-10": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-11": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-12": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-13": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2026-12-13",
+            "focus": "Baselines, residual diffusion prototype, reading",
+            "n": 4,
+            "note": "Monday is exam 4 marking. Tuesday to Friday are PhD days. Weekends are buffer.",
+            "start": "2026-12-07",
+            "tasks": {
+              "w4-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 1, "title": "Read: Downscaling precipitation with a bias-informed conditional diffusion model (Lyu et al.)", "track": "phd" },
+              "w4-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 2, "title": "Read: Dynamical-generative downscaling of climate model ensembles (Lopez-Gomez et al.)", "track": "phd" },
+              "w4-03": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 3, "optional": false, "order": 3, "title": "Read: An intercomparison of generative machine learning methods for downscaling precipitation (Ward-Leikis et al.)", "track": "phd" },
+              "w4-04": { "done": false, "doneAt": "", "doneWhen": "Runs end to end; commit link as evidence", "evidence": "", "hours": 3, "optional": false, "order": 4, "title": "Build: regression U-Net on the locked dataset", "track": "phd" },
+              "w4-05": { "done": false, "doneAt": "", "doneWhen": "Test metrics in the results table", "evidence": "", "hours": 2.5, "optional": false, "order": 5, "title": "Train the regression U-Net and record test metrics", "track": "phd" },
+              "w4-06": { "done": false, "doneAt": "", "doneWhen": "Baseline in the results table", "evidence": "", "hours": 2, "optional": false, "order": 6, "title": "Build: quantile-mapping baseline", "track": "phd" },
+              "w4-07": { "done": false, "doneAt": "", "doneWhen": "Model code committed; commit link as evidence", "evidence": "", "hours": 3, "optional": false, "order": 7, "title": "Build: residual diffusion prototype, part 1 (diffusion model on the regression residual)", "track": "phd" },
+              "w4-08": { "done": false, "doneAt": "", "doneWhen": "Loss curve and a few samples saved", "evidence": "", "hours": 3, "optional": false, "order": 8, "title": "Build: residual diffusion prototype, part 2 (run end to end on a small subset)", "track": "phd" },
+              "w4-09": { "done": false, "doneAt": "", "doneWhen": "Table with metric names and definitions", "evidence": "", "hours": 2, "optional": false, "order": 9, "title": "Draft the flagship metrics table from the intercomparison protocol", "track": "phd" },
+              "w4-10": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 10, "title": "Exam 4, block 1 of 2 (Mon 7 Dec, morning)", "track": "marking" },
+              "w4-11": { "done": false, "doneAt": "", "doneWhen": "Marks for this block recorded in your marks sheet", "evidence": "", "hours": 4, "optional": false, "order": 11, "title": "Exam 4, block 2 of 2 (Mon 7 Dec, afternoon)", "track": "marking" },
+              "w4-12": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 12, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
+            }
+          }
+        },
+        {
+          "id": "w5",
+          "data": {
+            "cap": 40,
+            "days": {
+              "2026-12-14": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-15": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-16": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-17": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-18": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2026-12-19": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-20": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2026-12-20",
+            "focus": "First diffusion runs and the leave gate",
+            "n": 5,
+            "note": "Last full week before the leave gate on Friday 18 Dec. Leave is earned by meeting the gate: baselines, evaluation harness and a first diffusion run done.",
+            "start": "2026-12-14",
+            "tasks": {
+              "w5-01": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 1, "title": "Read: Customized deep learning for precipitation bias correction and downscaling (Wang et al.)", "track": "phd" },
+              "w5-02": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2.5, "optional": false, "order": 2, "title": "Read: Machine learning for precipitation forecast postprocessing (Zhang and Ye)", "track": "phd" },
+              "w5-03": { "done": false, "doneAt": "", "doneWhen": "Five-line note on how the forecasts were evaluated", "evidence": "", "hours": 2, "optional": false, "order": 3, "title": "Read: Evaluation of South African Weather Service forecasts, Idai and KwaZulu-Natal", "track": "phd" },
+              "w5-04": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 4, "title": "Skim: TAUT, terrain-adaptive U-Net transformer for downscaling", "track": "phd" },
+              "w5-05": { "done": false, "doneAt": "", "doneWhen": "Five-line summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": false, "order": 5, "title": "Read: the Colamonaco thesis on downscaling, baseline sections", "track": "phd" },
+              "w5-06": { "done": false, "doneAt": "", "doneWhen": "Claim written in one sentence", "evidence": "", "hours": 1, "optional": false, "order": 6, "title": "Gap-log review: list the three most repeated gaps and draft one candidate article-1 claim", "track": "phd" },
+              "w5-07": { "done": false, "doneAt": "", "doneWhen": "Loss curve and samples saved", "evidence": "", "hours": 3, "optional": false, "order": 7, "title": "Build: first diffusion training run on a small subset", "track": "phd" },
+              "w5-08": { "done": false, "doneAt": "", "doneWhen": "Checkpoint saved with its config", "evidence": "", "hours": 3, "optional": false, "order": 8, "title": "Build: full diffusion training run", "track": "phd" },
+              "w5-09": { "done": false, "doneAt": "", "doneWhen": "Results table filled for every method", "evidence": "", "hours": 3, "optional": false, "order": 9, "title": "Evaluate against all baselines: RMSE, CRPS, spread-skill", "track": "phd" },
+              "w5-10": { "done": false, "doneAt": "", "doneWhen": "One command regenerates both", "evidence": "", "hours": 2, "optional": false, "order": 10, "title": "Generate the results table and one figure from a script", "track": "phd" },
+              "w5-11": { "done": false, "doneAt": "", "doneWhen": "Note sent", "evidence": "", "hours": 2, "optional": false, "order": 11, "title": "Write a one-page results-so-far note for your supervisor", "track": "phd" },
+              "w5-12": { "done": false, "doneAt": "", "doneWhen": "Pass or fail written down with evidence links", "evidence": "", "hours": 1, "optional": false, "order": 12, "title": "Leave gate check: baselines, evaluation harness and a first diffusion run all done", "track": "phd" },
+              "w5-13": { "done": false, "doneAt": "", "doneWhen": "Next week's plan checked against its cap", "evidence": "", "hours": 1, "optional": false, "order": 13, "title": "Weekly review: tick items, add evidence, set next week", "track": "review" }
+            }
+          }
+        },
+        {
+          "id": "w6",
+          "data": {
+            "cap": 4,
+            "days": {
+              "2026-12-21": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-22": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-23": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-24": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-25": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-26": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-27": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2026-12-27",
+            "focus": "Minimal leave week",
+            "n": 6,
+            "note": "Leave, minimal work only. One light reading task, optional. Nothing else is expected.",
+            "start": "2026-12-21",
+            "tasks": {
+              "w6-01": { "done": false, "doneAt": "", "doneWhen": "Short summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": true, "order": 1, "title": "Read one paper from the triage reading list at your own pace; add one gap-log line", "track": "phd" }
+            }
+          }
+        },
+        {
+          "id": "w7",
+          "data": {
+            "cap": 4,
+            "days": {
+              "2026-12-28": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-29": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-30": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2026-12-31": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2027-01-01": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2027-01-02": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2027-01-03": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2027-01-03",
+            "focus": "Minimal leave week",
+            "n": 7,
+            "note": "Leave, minimal work only. One light reading task and a short plan for the return on 4 Jan, both optional.",
+            "start": "2026-12-28",
+            "tasks": {
+              "w7-01": { "done": false, "doneAt": "", "doneWhen": "Short summary and one gap-log line in Zotero notes", "evidence": "", "hours": 2, "optional": true, "order": 1, "title": "Read one paper from the triage reading list; add one gap-log line", "track": "phd" },
+              "w7-02": { "done": false, "doneAt": "", "doneWhen": "Half-page note saved", "evidence": "", "hours": 1, "optional": true, "order": 2, "title": "Write a half-page plan for the week of 4 Jan from the Friday 18 Dec review notes", "track": "phd" }
+            }
+          }
+        },
+        {
+          "id": "w8",
+          "data": {
+            "cap": 40,
+            "days": {
+              "2027-01-04": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2027-01-05": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2027-01-06": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2027-01-07": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2027-01-08": { "am": { "k": "phd", "t": "PhD" }, "pm": { "k": "phd", "t": "PhD" } },
+              "2027-01-09": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } },
+              "2027-01-10": { "am": { "k": "off", "t": "Off" }, "pm": { "k": "off", "t": "Off" } }
+            },
+            "end": "2027-01-10",
+            "focus": "Back at full capacity: main experiments",
+            "n": 8,
+            "note": "Full PhD week from Monday 4 Jan. Tasks are added at the Friday review on 18 Dec, once you know how the gate went.",
+            "start": "2027-01-04",
+            "tasks": {}
+          }
+        },
+        { "id": "w9", "data": { "cap": 40, "days": {}, "end": "2027-01-17", "focus": "Main experiments and tuning", "n": 9, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-01-11", "tasks": {} } },
+        { "id": "w10", "data": { "cap": 40, "days": {}, "end": "2027-01-24", "focus": "Ablations and regional breakdown", "n": 10, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-01-18", "tasks": {} } },
+        { "id": "w11", "data": { "cap": 40, "days": {}, "end": "2027-01-31", "focus": "Freeze results", "n": 11, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-01-25", "tasks": {} } },
+        { "id": "w12", "data": { "cap": 20, "days": {}, "end": "2027-02-07", "focus": "Figures and outline", "n": 12, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-01", "tasks": {} } },
+        { "id": "w13", "data": { "cap": 20, "days": {}, "end": "2027-02-14", "focus": "Draft methods and results", "n": 13, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-08", "tasks": {} } },
+        { "id": "w14", "data": { "cap": 20, "days": {}, "end": "2027-02-21", "focus": "Draft introduction and related work", "n": 14, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-15", "tasks": {} } },
+        { "id": "w15", "data": { "cap": 20, "days": {}, "end": "2027-02-28", "focus": "Complete draft to supervisor", "n": 15, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-02-22", "tasks": {} } },
+        { "id": "w16", "data": { "cap": 20, "days": {}, "end": "2027-03-07", "focus": "Supervisor feedback", "n": 16, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-01", "tasks": {} } },
+        { "id": "w17", "data": { "cap": 20, "days": {}, "end": "2027-03-14", "focus": "Revisions and extra experiments", "n": 17, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-08", "tasks": {} } },
+        { "id": "w18", "data": { "cap": 20, "days": {}, "end": "2027-03-21", "focus": "Polish and journal formatting", "n": 18, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-15", "tasks": {} } },
+        { "id": "w19", "data": { "cap": 20, "days": {}, "end": "2027-03-28", "focus": "Final checks", "n": 19, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-22", "tasks": {} } },
+        { "id": "w20", "data": { "cap": 20, "days": {}, "end": "2027-04-04", "focus": "Submit by Wednesday 31 March", "n": 20, "note": "Tasks are added at the review two weeks before. The cap assumes teaching starts again in February; change it when the date is known.", "start": "2027-03-29", "tasks": {} } }
+      ],
+      "milestones": [
+        { "id": "m01", "data": { "date": "2026-11-18", "done": false, "title": "Five reports marked (deadline 18 Nov; planned done 13 Nov)", "track": "marking" } },
+        { "id": "m02", "data": { "date": "2026-11-18", "done": false, "title": "Exam 1 marked (due about a week after the exam; confirm)", "track": "marking" } },
+        { "id": "m03", "data": { "date": "2026-11-20", "done": false, "title": "Exam 2 marked (due about 23 Nov; confirm)", "track": "marking" } },
+        { "id": "m04", "data": { "date": "2026-11-27", "done": false, "title": "Data audit finished and article-1 brief agreed with supervisor", "track": "phd" } },
+        { "id": "m05", "data": { "date": "2026-12-07", "done": false, "title": "Exam 3 marked by Fri 4 Dec (deadline 6 Dec); exam 4 marked by Mon 7 Dec (deadline 8 Dec)", "track": "marking" } },
+        { "id": "m06", "data": { "date": "2026-12-18", "done": false, "title": "Leave gate: baselines, evaluation harness and a first diffusion run done", "track": "phd" } },
+        { "id": "m07", "data": { "date": "2027-01-29", "done": false, "title": "Main experiments done; results frozen", "track": "phd" } },
+        { "id": "m08", "data": { "date": "2027-02-26", "done": false, "title": "Full draft with supervisor", "track": "phd" } },
+        { "id": "m09", "data": { "date": "2027-03-31", "done": false, "title": "Article 1 submitted", "track": "phd" } },
+        { "id": "m10", "data": { "date": "2027-06-30", "done": false, "title": "Article 1 accepted (target; typically 2 to 4 months after submission)", "track": "phd" } },
+        { "id": "m11", "data": { "date": "2027-07-31", "done": false, "title": "Article 2 submitted (latest: end of August 2027)", "track": "phd" } },
+        { "id": "m12", "data": { "date": "2027-11-30", "done": false, "title": "Article 3 submitted (under review is enough)", "track": "phd" } },
+        { "id": "m13", "data": { "date": "2027-12-15", "done": false, "title": "Articles 1 and 2 accepted; PhD complete", "track": "phd" } }
+      ]
+    };
+
+    var STORAGE_KEY = 'article_one_tracker_v1';
+    var SYNC_STORAGE_KEY = 'article_one_tracker_sync_v1';
+    var THEME_KEY = 'article_one_tracker_theme';
+    var GIST_FILENAME = 'article_one_tracker.json';
+
+    var TRACKS = {
+      phd: { label: 'PhD article', cls: 't-phd' },
+      marking: { label: 'Marking', cls: 't-marking' },
+      income: { label: 'Income and portfolio', cls: 't-income' },
+      review: { label: 'Weekly review', cls: 't-review' }
+    };
+    var TRACK_ORDER = ['phd', 'marking', 'income', 'review'];
+    var REASONS = ['Marking took longer', 'Bigger than planned', 'Personal', 'Dropped priority'];
+    var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    var state = {
+      view: 'weeks',
+      week: null,
+      weeks: [],
+      milestones: [],
+      updatedAt: '',
+      drafts: {},
+      moving: null,
+      addingTask: false,
+      confirmingReset: false,
+      scrollTab: false,
+      sync: {
+        token: '',
+        gistId: '',
+        lastSyncedAt: '',
+        status: 'local',
+        busy: false,
+        error: ''
+      }
+    };
+
+    var app = document.getElementById('app');
+    var factsEl = document.getElementById('facts');
+    var statusEl = document.getElementById('status');
+    var syncBtn = document.getElementById('syncBtn');
+    var syncDot = document.getElementById('syncDot');
+    var syncLabel = document.getElementById('syncLabel');
+    var themeBtn = document.getElementById('themeBtn');
+    var exportBtn = document.getElementById('exportBtn');
+    var importBtn = document.getElementById('importBtn');
+    var importFile = document.getElementById('importFile');
+    var resetZone = document.getElementById('resetZone');
+
+    /* Sync modal elements */
+    var syncModal = document.getElementById('syncModal');
+    var syncCloseBtn = document.getElementById('syncCloseBtn');
+    var modalSyncDot = document.getElementById('modalSyncDot');
+    var syncBannerText = document.getElementById('syncBannerText');
+    var syncBannerMeta = document.getElementById('syncBannerMeta');
+    var syncTokenInput = document.getElementById('syncTokenInput');
+    var toggleTokenBtn = document.getElementById('toggleTokenBtn');
+    var syncGistInput = document.getElementById('syncGistInput');
+    var copyGistBtn = document.getElementById('copyGistBtn');
+    var syncConnectActions = document.getElementById('syncConnectActions');
+    var syncPrimaryActionBtn = document.getElementById('syncPrimaryActionBtn');
+    var syncConnectedActions = document.getElementById('syncConnectedActions');
+    var pullNowBtn = document.getElementById('pullNowBtn');
+    var pushNowBtn = document.getElementById('pushNowBtn');
+    var disconnectSyncBtn = document.getElementById('disconnectSyncBtn');
+
+    var statusTimer = null;
+    var pushDebounceTimer = null;
+
+    /* ---------- Helpers ---------- */
+    function el(tag, attrs, kids) {
+      var n = document.createElement(tag);
+      if (attrs) {
+        Object.keys(attrs).forEach(function (k) {
+          var v = attrs[k];
+          if (v === null || v === undefined || v === false) return;
+          if (k === 'class') n.className = v;
+          else if (k === 'text') n.textContent = v;
+          else if (k === 'style') n.setAttribute('style', v);
+          else n.setAttribute(k, v === true ? '' : String(v));
+        });
+      }
+      (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
+      return n;
+    }
+
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function fmtH(n) {
+      var r = Math.round(n * 10) / 10;
+      return (r % 1 === 0) ? String(r) : r.toFixed(1);
+    }
+
+    function parseDate(s) {
+      var p = String(s || '').split('-');
+      return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    }
+
+    function fmtDate(d) {
+      return d.getDate() + ' ' + MONTHS[d.getMonth()];
+    }
+
+    function today() {
+      var t = new Date();
+      return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    }
+
+    function isoToday() {
+      var t = new Date();
+      var m = String(t.getMonth() + 1).padStart(2, '0');
+      var d = String(t.getDate()).padStart(2, '0');
+      return t.getFullYear() + '-' + m + '-' + d;
+    }
+
+    function daysBetween(a, b) {
+      return Math.round((b - a) / 86400000);
+    }
+
+    function say(msg) {
+      statusEl.textContent = msg;
+      statusEl.hidden = false;
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(function () { statusEl.hidden = true; }, 4500);
+    }
+
+    function fmtTime(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      if (isNaN(d)) return '';
+      var hh = String(d.getHours()).padStart(2, '0');
+      var mm = String(d.getMinutes()).padStart(2, '0');
+      return fmtDate(d) + ', ' + hh + ':' + mm;
+    }
+
+    function copyText(text) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) {
+          say('Gist ID copied to clipboard.');
+          return;
+        }
+      } catch (e) {}
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          say('Gist ID copied to clipboard.');
+        }, function () {
+          say('Copy failed — please select and copy the Gist ID manually.');
+        });
+      } else {
+        say('Copy failed — please select and copy the Gist ID manually.');
+      }
+    }
+
+    /* ---------- Schema normalization & persistence ---------- */
+    function normalizeData(raw) {
+      if (!raw || !Array.isArray(raw.weeks) || !Array.isArray(raw.milestones)) {
+        throw new Error('JSON must contain "weeks" and "milestones" arrays.');
+      }
+      var weeks = raw.weeks.map(function (w) {
+        var src = (w && w.data && typeof w.data === 'object') ? w.data : w;
+        var out = clone(src || {});
+        out.id = w.id || ('w' + out.n);
+        out.n = Number(out.n);
+        out.cap = Number(out.cap) || 0;
+        out.days = out.days || {};
+        out.tasks = out.tasks || {};
+        return out;
+      }).sort(function (a, b) { return a.n - b.n; });
+
+      var milestones = raw.milestones.map(function (m) {
+        var src = (m && m.data && typeof m.data === 'object') ? m.data : m;
+        var out = clone(src || {});
+        out.id = m.id || ('m-' + Math.random().toString(36).slice(2, 7));
+        out.done = !!out.done;
+        return out;
+      });
+
+      return {
+        updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : '',
+        weeks: weeks,
+        milestones: milestones
+      };
+    }
+
+    function serializeData(includeUpdatedAt) {
+      var out = {
+        exported: isoToday(),
+        weeks: state.weeks.map(function (w) {
+          var copy = clone(w);
+          var id = copy.id;
+          delete copy.id;
+          return { id: id, data: copy };
+        }),
+        milestones: state.milestones.map(function (m) {
+          var copy = clone(m);
+          var id = copy.id;
+          delete copy.id;
+          return { id: id, data: copy };
+        })
+      };
+      if (includeUpdatedAt) {
+        out.updatedAt = state.updatedAt || new Date().toISOString();
+      }
+      return out;
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeData(true)));
+      } catch (e) {
+        say('Changes kept in memory (local storage unavailable in this browser view).');
+      }
+    }
+
+    function loadLocal() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          return normalizeData(JSON.parse(raw));
+        }
+      } catch (e) {
+        /* Fallback to embedded INITIAL_DATA */
+      }
+      var fresh = normalizeData(INITIAL_DATA);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DATA));
+      } catch (e) {}
+      return fresh;
+    }
+
+    function loadSyncConfig() {
+      try {
+        var raw = localStorage.getItem(SYNC_STORAGE_KEY);
+        if (!raw) return;
+        var cfg = JSON.parse(raw);
+        if (cfg && typeof cfg === 'object') {
+          state.sync.token = String(cfg.token || '');
+          state.sync.gistId = String(cfg.gistId || '');
+          state.sync.lastSyncedAt = String(cfg.lastSyncedAt || '');
+          state.sync.status = (state.sync.token && state.sync.gistId) ? 'synced' : 'local';
+        }
+      } catch (e) {}
+    }
+
+    function saveSyncConfig() {
+      try {
+        localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify({
+          token: state.sync.token,
+          gistId: state.sync.gistId,
+          lastSyncedAt: state.sync.lastSyncedAt
+        }));
+      } catch (e) {}
+    }
+
+    function isSyncConnected() {
+      return !!(state.sync.token && state.sync.gistId);
+    }
+
+    /* ---------- Private GitHub Gist Sync ---------- */
+    function updateSyncUI() {
+      var st = state.sync.status;
+      var dotCls = 'sync-dot';
+      var label = 'Sync: Local';
+
+      if (st === 'synced' && isSyncConnected()) {
+        dotCls += ' synced';
+        label = 'Synced';
+      } else if (st === 'saving') {
+        dotCls += ' syncing';
+        label = 'Saving...';
+      } else if (st === 'pulling') {
+        dotCls += ' syncing';
+        label = 'Syncing...';
+      } else if (st === 'error') {
+        dotCls += ' error';
+        label = 'Sync error';
+      }
+
+      syncDot.className = dotCls;
+      syncLabel.textContent = label;
+      modalSyncDot.className = dotCls;
+
+      if (isSyncConnected()) {
+        syncBannerText.textContent = st === 'error'
+          ? ('Sync error: ' + (state.sync.error || 'Could not reach GitHub'))
+          : ('Connected to Gist ' + state.sync.gistId);
+        syncBannerMeta.textContent = state.sync.lastSyncedAt
+          ? ('Last synced ' + fmtTime(state.sync.lastSyncedAt))
+          : 'Waiting for first sync';
+      } else {
+        syncBannerText.textContent = 'Not connected (local only)';
+        syncBannerMeta.textContent = state.sync.error || 'Connect a private GitHub Gist to sync between PC and tablet.';
+      }
+
+      var hasGistInput = (syncGistInput.value || '').trim().length > 0;
+      copyGistBtn.hidden = !hasGistInput;
+      syncPrimaryActionBtn.textContent = hasGistInput
+        ? 'Connect & Pull from Gist'
+        : 'Create Private Gist & Connect';
+
+      syncConnectActions.hidden = isSyncConnected();
+      syncConnectedActions.hidden = !isSyncConnected();
+
+      var disabled = !!state.sync.busy;
+      syncPrimaryActionBtn.disabled = disabled;
+      pullNowBtn.disabled = disabled;
+      pushNowBtn.disabled = disabled;
+      disconnectSyncBtn.disabled = disabled;
+    }
+
+    function githubFetch(url, options, token) {
+      var headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + token,
+        'X-GitHub-Api-Version': '2022-11-28'
+      };
+      if (options && options.body) {
+        headers['Content-Type'] = 'application/json';
+      }
+      var opts = Object.assign({ cache: 'no-store', headers: headers }, options || {});
+      opts.headers = headers;
+      return fetch(url, opts).then(function (res) {
+        if (!res.ok) {
+          return res.json().catch(function () { return {}; }).then(function (errBody) {
+            var msg = (errBody && errBody.message) ? errBody.message : ('HTTP ' + res.status);
+            throw new Error(msg);
+          });
+        }
+        return res.json();
+      });
+    }
+
+    function createGistAndConnect(token) {
+      if (!token) {
+        say('Enter your GitHub Personal Access Token first.');
+        return;
+      }
+      state.sync.busy = true;
+      state.sync.status = 'saving';
+      state.sync.error = '';
+      updateSyncUI();
+
+      state.updatedAt = new Date().toISOString();
+      var payload = serializeData(true);
+      var body = {
+        description: 'Article One Tracker Data',
+        public: false,
+        files: {}
+      };
+      body.files[GIST_FILENAME] = { content: JSON.stringify(payload, null, 2) };
+
+      githubFetch('https://api.github.com/gists', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }, token).then(function (data) {
+        if (!data || !data.id) throw new Error('GitHub did not return a Gist ID.');
+        state.sync.token = token;
+        state.sync.gistId = data.id;
+        state.sync.lastSyncedAt = new Date().toISOString();
+        state.sync.status = 'synced';
+        state.sync.busy = false;
+        state.sync.error = '';
+        syncGistInput.value = data.id;
+        saveSyncConfig();
+        saveLocal();
+        updateSyncUI();
+        say('Private Gist created (' + data.id + '). Copy this ID to your other device.');
+      }).catch(function (err) {
+        state.sync.busy = false;
+        state.sync.status = 'error';
+        state.sync.error = err && err.message ? err.message : 'Could not create Gist.';
+        updateSyncUI();
+        say('Could not create Gist: ' + state.sync.error);
+      });
+    }
+
+    function pullFromGist(opts) {
+      opts = opts || {};
+      var token = opts.token || state.sync.token;
+      var gistId = opts.gistId || state.sync.gistId;
+      if (!token || !gistId) return Promise.resolve();
+      if (state.sync.busy && opts.silent) return Promise.resolve();
+
+      state.sync.busy = true;
+      state.sync.status = 'pulling';
+      state.sync.error = '';
+      updateSyncUI();
+
+      return githubFetch('https://api.github.com/gists/' + encodeURIComponent(gistId), {
+        method: 'GET'
+      }, token).then(function (data) {
+        var files = (data && data.files) ? data.files : {};
+        var fileObj = files[GIST_FILENAME];
+        if (!fileObj) {
+          var firstKey = Object.keys(files)[0];
+          if (firstKey) fileObj = files[firstKey];
+        }
+        if (!fileObj || !fileObj.content) {
+          throw new Error('Gist does not contain ' + GIST_FILENAME + '.');
+        }
+        var parsed = JSON.parse(fileObj.content);
+        var norm = normalizeData(parsed);
+
+        state.weeks = norm.weeks;
+        state.milestones = norm.milestones;
+        state.updatedAt = norm.updatedAt || new Date().toISOString();
+        state.drafts = {};
+        state.moving = null;
+        if (!weekById(state.week)) {
+          state.week = currentWeekN();
+          state.scrollTab = true;
+        }
+
+        state.sync.token = token;
+        state.sync.gistId = gistId;
+        state.sync.lastSyncedAt = new Date().toISOString();
+        state.sync.status = 'synced';
+        state.sync.busy = false;
+        state.sync.error = '';
+
+        saveSyncConfig();
+        saveLocal();
+        updateSyncUI();
+        render();
+        if (!opts.silent) {
+          say('Pulled latest tracker from GitHub Gist.');
+        }
+      }).catch(function (err) {
+        state.sync.busy = false;
+        state.sync.status = 'error';
+        state.sync.error = err && err.message ? err.message : 'Pull failed.';
+        updateSyncUI();
+        if (!opts.silent) {
+          say('Sync pull failed: ' + state.sync.error);
+        }
+      });
+    }
+
+    function pushToGist(opts) {
+      opts = opts || {};
+      if (!isSyncConnected()) return Promise.resolve();
+
+      state.sync.busy = true;
+      state.sync.status = 'saving';
+      state.sync.error = '';
+      updateSyncUI();
+
+      var payload = serializeData(true);
+      var body = { files: {} };
+      body.files[GIST_FILENAME] = { content: JSON.stringify(payload, null, 2) };
+
+      return githubFetch('https://api.github.com/gists/' + encodeURIComponent(state.sync.gistId), {
+        method: 'PATCH',
+        body: JSON.stringify(body)
+      }, state.sync.token).then(function () {
+        state.sync.lastSyncedAt = new Date().toISOString();
+        state.sync.status = 'synced';
+        state.sync.busy = false;
+        state.sync.error = '';
+        saveSyncConfig();
+        updateSyncUI();
+        if (!opts.silent) {
+          say('Pushed tracker to GitHub Gist.');
+        }
+      }).catch(function (err) {
+        state.sync.busy = false;
+        state.sync.status = 'error';
+        state.sync.error = err && err.message ? err.message : 'Push failed.';
+        updateSyncUI();
+        say('Sync error (saved locally): ' + state.sync.error);
+      });
+    }
+
+    function persistChange() {
+      state.updatedAt = new Date().toISOString();
+      saveLocal();
+      if (!isSyncConnected()) return;
+      state.sync.status = 'saving';
+      updateSyncUI();
+      clearTimeout(pushDebounceTimer);
+      pushDebounceTimer = setTimeout(function () {
+        pushDebounceTimer = null;
+        pushToGist({ silent: true });
+      }, 600);
+    }
+
+    function openSyncModal() {
+      syncTokenInput.value = state.sync.token;
+      syncGistInput.value = state.sync.gistId;
+      syncTokenInput.type = 'password';
+      toggleTokenBtn.textContent = 'Show';
+      toggleTokenBtn.setAttribute('aria-pressed', 'false');
+      updateSyncUI();
+      syncModal.hidden = false;
+      if (!state.sync.token) syncTokenInput.focus();
+      else syncCloseBtn.focus();
+    }
+
+    function closeSyncModal() {
+      syncModal.hidden = true;
+      syncBtn.focus();
+    }
+
+    syncBtn.addEventListener('click', openSyncModal);
+    syncCloseBtn.addEventListener('click', closeSyncModal);
+    syncModal.addEventListener('click', function (e) {
+      if (e.target === syncModal) closeSyncModal();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !syncModal.hidden) closeSyncModal();
+    });
+
+    toggleTokenBtn.addEventListener('click', function () {
+      var show = syncTokenInput.type === 'password';
+      syncTokenInput.type = show ? 'text' : 'password';
+      toggleTokenBtn.textContent = show ? 'Hide' : 'Show';
+      toggleTokenBtn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    });
+
+    syncGistInput.addEventListener('input', updateSyncUI);
+
+    copyGistBtn.addEventListener('click', function () {
+      var id = (syncGistInput.value || '').trim();
+      if (id) copyText(id);
+    });
+
+    syncPrimaryActionBtn.addEventListener('click', function () {
+      var token = (syncTokenInput.value || '').trim();
+      var gistId = (syncGistInput.value || '').trim();
+      if (!token) {
+        say('Enter your GitHub Personal Access Token first.');
+        syncTokenInput.focus();
+        return;
+      }
+      if (gistId) {
+        pullFromGist({ token: token, gistId: gistId, silent: false });
+      } else {
+        createGistAndConnect(token);
+      }
+    });
+
+    pullNowBtn.addEventListener('click', function () {
+      pullFromGist({ silent: false });
+    });
+
+    pushNowBtn.addEventListener('click', function () {
+      clearTimeout(pushDebounceTimer);
+      pushDebounceTimer = null;
+      pushToGist({ silent: false });
+    });
+
+    disconnectSyncBtn.addEventListener('click', function () {
+      clearTimeout(pushDebounceTimer);
+      pushDebounceTimer = null;
+      state.sync.token = '';
+      state.sync.gistId = '';
+      state.sync.lastSyncedAt = '';
+      state.sync.status = 'local';
+      state.sync.error = '';
+      state.sync.busy = false;
+      syncTokenInput.value = '';
+      syncGistInput.value = '';
+      saveSyncConfig();
+      updateSyncUI();
+      say('Disconnected GitHub Gist sync. Local data kept.');
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && isSyncConnected() && !state.sync.busy && !pushDebounceTimer) {
+        pullFromGist({ silent: true });
+      }
+    });
+
+    /* ---------- Theme management ---------- */
+    function effectiveTheme() {
+      var explicit = document.documentElement.getAttribute('data-theme');
+      if (explicit === 'dark' || explicit === 'light') return explicit;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+
+    function updateThemeBtn() {
+      var cur = effectiveTheme();
+      themeBtn.textContent = cur === 'dark' ? 'Light mode' : 'Dark mode';
+      themeBtn.setAttribute('aria-pressed', cur === 'dark' ? 'true' : 'false');
+    }
+
+    function initTheme() {
+      try {
+        var saved = localStorage.getItem(THEME_KEY);
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+      updateThemeBtn();
+    }
+
+    themeBtn.addEventListener('click', function () {
+      var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+      updateThemeBtn();
+    });
+
+    /* ---------- Export / Import / Reset toolbar ---------- */
+    exportBtn.addEventListener('click', function () {
+      try {
+        var payload = JSON.stringify(serializeData(false), null, 2);
+        var blob = new Blob([payload], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'tracker_dump_' + isoToday() + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        say('Exported tracker JSON.');
+      } catch (e) {
+        say('Could not export JSON in this browser view.');
+      }
+    });
+
+    importBtn.addEventListener('click', function () {
+      importFile.value = '';
+      importFile.click();
+    });
+
+    importFile.addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var parsed = JSON.parse(String(reader.result || ''));
+          var norm = normalizeData(parsed);
+          state.weeks = norm.weeks;
+          state.milestones = norm.milestones;
+          state.drafts = {};
+          state.moving = null;
+          state.addingTask = false;
+          if (!weekById(state.week)) {
+            state.week = currentWeekN();
+            state.scrollTab = true;
+          }
+          persistChange();
+          render();
+          say('Imported ' + state.weeks.length + ' weeks and ' + state.milestones.length + ' milestones.');
+        } catch (err) {
+          say('Import failed: ' + (err && err.message ? err.message : 'invalid JSON file.'));
+        }
+      };
+      reader.onerror = function () {
+        say('Could not read the selected file.');
+      };
+      reader.readAsText(file);
+    });
+
+    function renderResetZone() {
+      resetZone.textContent = '';
+      if (!state.confirmingReset) {
+        resetZone.appendChild(el('button', {
+          type: 'button',
+          class: 'tbtn',
+          'data-reset-ask': '1',
+          title: 'Restore initial embedded dump'
+        }, [document.createTextNode('Reset')]));
+      } else {
+        resetZone.appendChild(el('span', { class: 'reset-confirm' }, [
+          el('button', { type: 'button', class: 'tbtn danger', 'data-reset-confirm': '1', text: 'Confirm reset?' }),
+          el('button', { type: 'button', class: 'tbtn', 'data-reset-cancel': '1', text: 'Cancel' })
+        ]));
+      }
+    }
+
+    resetZone.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('button') : null;
+      if (!btn) return;
+      if (btn.hasAttribute('data-reset-ask')) {
+        state.confirmingReset = true;
+        renderResetZone();
+      } else if (btn.hasAttribute('data-reset-cancel')) {
+        state.confirmingReset = false;
+        renderResetZone();
+      } else if (btn.hasAttribute('data-reset-confirm')) {
+        var norm = normalizeData(INITIAL_DATA);
+        state.weeks = norm.weeks;
+        state.milestones = norm.milestones;
+        state.drafts = {};
+        state.moving = null;
+        state.addingTask = false;
+        state.confirmingReset = false;
+        state.week = currentWeekN();
+        state.scrollTab = true;
+        persistChange();
+        renderResetZone();
+        render();
+        say('Restored initial 2026-11-27 dump.');
+      }
+    });
+
+    /* ---------- Task & week queries ---------- */
+    function tasksOf(week, includeMoved) {
+      var m = week.tasks || {};
+      return Object.keys(m).map(function (id) {
+        var t = m[id] || {};
+        return {
+          id: id,
+          order: Number(t.order) || 0,
+          track: TRACKS[t.track] ? t.track : 'phd',
+          title: String(t.title || ''),
+          hours: Number(t.hours) || 0,
+          doneWhen: String(t.doneWhen || ''),
+          optional: !!t.optional,
+          done: !!t.done,
+          evidence: String(t.evidence || ''),
+          doneAt: String(t.doneAt || ''),
+          moved: !!t.moved,
+          movedTo: t.movedTo,
+          movedFrom: t.movedFrom,
+          moveReason: String(t.moveReason || '')
+        };
+      }).filter(function (t) { return includeMoved ? true : !t.moved; })
+        .sort(function (a, b) { return (a.order - b.order) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); });
+    }
+
+    /* PhD hours and task counts exclude marking blocks, which are counted on their own. */
+    function totals(week) {
+      var planned = 0, done = 0, n = 0, nd = 0, mN = 0, mD = 0;
+      tasksOf(week).forEach(function (t) {
+        if (t.track === 'marking') {
+          mN += 1;
+          if (t.done) mD += 1;
+          return;
+        }
+        planned += t.hours;
+        n += 1;
+        if (t.done) {
+          done += t.hours;
+          nd += 1;
+        }
+      });
+      return { planned: planned, done: done, n: n, nd: nd, mN: mN, mD: mD };
+    }
+
+    function currentWeekN() {
+      if (!state.weeks.length) return null;
+      var t = today();
+      for (var i = 0; i < state.weeks.length; i++) {
+        var w = state.weeks[i];
+        if (t >= parseDate(w.start) && t <= parseDate(w.end)) return w.n;
+      }
+      return t < parseDate(state.weeks[0].start) ? state.weeks[0].n : state.weeks[state.weeks.length - 1].n;
+    }
+
+    function weekById(n) {
+      for (var i = 0; i < state.weeks.length; i++) {
+        if (state.weeks[i].n === n) return state.weeks[i];
+      }
+      return null;
+    }
+
+    function weekByDocId(id) {
+      for (var i = 0; i < state.weeks.length; i++) {
+        if (state.weeks[i].id === id) return state.weeks[i];
+      }
+      return null;
+    }
+
+    /* ---------- Mutations ---------- */
+    function toggleTask(weekId, taskId) {
+      var w = weekByDocId(weekId);
+      if (!w || !w.tasks || !w.tasks[taskId]) return;
+      var t = w.tasks[taskId];
+      t.done = !t.done;
+      t.doneAt = t.done ? new Date().toISOString() : '';
+      persistChange();
+      render();
+    }
+
+    function updateEvidence(weekId, taskId, value) {
+      var w = weekByDocId(weekId);
+      if (!w || !w.tasks || !w.tasks[taskId]) return;
+      w.tasks[taskId].evidence = value;
+      persistChange();
+      render();
+    }
+
+    function toggleMilestone(id) {
+      for (var i = 0; i < state.milestones.length; i++) {
+        if (state.milestones[i].id === id) {
+          state.milestones[i].done = !state.milestones[i].done;
+          persistChange();
+          render();
+          return;
+        }
+      }
+    }
+
+    function moveTask(weekId, taskId, reason) {
+      var w = weekByDocId(weekId);
+      if (!w || !w.tasks || !w.tasks[taskId]) return;
+      var next = weekById(w.n + 1);
+      if (!next) {
+        say('There is no later week to move this task to.');
+        return;
+      }
+      var t = w.tasks[taskId];
+      var newId = taskId + '-m' + w.n + '-' + Date.now().toString(36).slice(-3);
+      next.tasks = next.tasks || {};
+      next.tasks[newId] = {
+        order: -1,
+        track: t.track,
+        title: t.title,
+        hours: t.hours,
+        doneWhen: t.doneWhen || '',
+        optional: !!t.optional,
+        done: false,
+        evidence: '',
+        doneAt: '',
+        movedFrom: w.n,
+        moveReason: reason
+      };
+      t.moved = true;
+      t.movedTo = next.n;
+      t.moveReason = reason;
+      persistChange();
+      render();
+      say('Moved to week ' + next.n + '.');
+    }
+
+    function addTaskToWeek(weekId, payload) {
+      var w = weekByDocId(weekId);
+      if (!w) return;
+      w.tasks = w.tasks || {};
+      var maxOrder = 0;
+      Object.keys(w.tasks).forEach(function (k) {
+        var ord = Number(w.tasks[k].order) || 0;
+        if (ord > maxOrder) maxOrder = ord;
+      });
+      var newId = 'w' + w.n + '-' + Date.now().toString(36);
+      w.tasks[newId] = {
+        order: maxOrder + 1,
+        track: TRACKS[payload.track] ? payload.track : 'phd',
+        title: payload.title,
+        hours: payload.hours,
+        doneWhen: payload.doneWhen,
+        optional: !!payload.optional,
+        done: false,
+        evidence: '',
+        doneAt: ''
+      };
+      state.addingTask = false;
+      persistChange();
+      render();
+      say('Added task to week ' + w.n + '.');
+    }
+
+    /* ---------- Rendering ---------- */
+    function svgTick() {
+      var ns = 'http://www.w3.org/2000/svg';
+      var s = document.createElementNS(ns, 'svg');
+      s.setAttribute('viewBox', '0 0 20 20');
+      s.setAttribute('fill', 'none');
+      s.setAttribute('stroke-width', '3');
+      s.setAttribute('stroke-linecap', 'round');
+      s.setAttribute('stroke-linejoin', 'round');
+      var p = document.createElementNS(ns, 'polyline');
+      p.setAttribute('points', '4,10.5 8.5,15 16,5.5');
+      s.appendChild(p);
+      return s;
+    }
+
+    function gauge(week) {
+      var tt = totals(week), cap = Number(week.cap) || 0;
+      if (cap <= 0) {
+        return el('section', { class: 'gauge' }, [
+          el('h2', { text: 'PhD hours this week' }),
+          el('p', {
+            class: 'sub',
+            text: tt.planned > 0
+              ? fmtH(tt.planned) + ' h planned with no PhD capacity. Raise the cap or move the tasks.'
+              : 'No PhD hours planned this week.'
+          })
+        ]);
+      }
+      var planPct = Math.min(100, tt.planned / cap * 100);
+      var donePct = Math.min(100, tt.done / cap * 100);
+      var over = tt.planned > cap;
+      var head = el('div', { class: 'gauge-head' }, [
+        el('h2', { text: 'PhD hours this week' }),
+        el('p', {
+          class: 'mono' + (over ? ' over' : ''),
+          text: fmtH(tt.done) + ' done, ' + fmtH(tt.planned) + ' planned, cap ' + fmtH(cap) +
+            (over ? ', over by ' + fmtH(tt.planned - cap) : '')
+        })
+      ]);
+      var track = el('div', {
+        class: 'gauge-track',
+        role: 'img',
+        'aria-label': fmtH(tt.done) + ' of ' + fmtH(cap) + ' hours done'
+      }, [
+        el('div', { class: 'gauge-planned', style: 'width:' + planPct + '%' }),
+        el('div', { class: 'gauge-done', style: 'width:' + donePct + '%' }),
+        el('div', { class: 'gauge-ticks', style: '--unit:' + (100 / cap) + '%' })
+      ]);
+      var scale = el('div', { class: 'gauge-scale', 'aria-hidden': 'true' });
+      var marks = [];
+      for (var h = 0; h < cap; h += 5) marks.push(h);
+      if (marks.length > 1 && (cap - marks[marks.length - 1]) < cap * 0.1) marks.pop();
+      marks.push(cap);
+      marks.forEach(function (m, i) {
+        var cls = i === 0 ? 'first' : (i === marks.length - 1 ? 'last' : '');
+        scale.appendChild(el('span', { class: cls, style: 'left:' + (m / cap * 100) + '%', text: fmtH(m) }));
+      });
+      return el('section', { class: 'gauge' }, [head, track, scale]);
+    }
+
+    function dayCell(c, half) {
+      var k = (c && c.k) ? c.k : 'off';
+      var t = (c && c.t) ? c.t : 'Off';
+      return el('div', { class: 'dcell k-' + k }, [
+        el('small', { text: half }),
+        document.createTextNode(t)
+      ]);
+    }
+
+    function dayList(week) {
+      var days = week.days || {};
+      var keys = Object.keys(days).sort();
+      if (!keys.length) return null;
+      var t0 = today(), box = el('div', { class: 'days' });
+      keys.forEach(function (k) {
+        var d = parseDate(k), day = days[k] || {};
+        var isToday = daysBetween(t0, d) === 0;
+        box.appendChild(el('div', { class: 'drow' + (isToday ? ' today' : '') }, [
+          el('div', { class: 'dlabel' }, [
+            el('b', { text: WDAYS[d.getDay()] }),
+            document.createTextNode(fmtDate(d))
+          ]),
+          dayCell(day.am, 'AM'),
+          dayCell(day.pm, 'PM')
+        ]));
+      });
+      return box;
+    }
+
+    function legend() {
+      function item(k, text) {
+        return el('span', null, [el('i', { class: 'k-' + k }), document.createTextNode(text)]);
+      }
+      return el('div', { class: 'legend' }, [
+        item('phd', 'PhD'),
+        item('marking', 'Marking'),
+        item('exam', 'Exam day'),
+        item('off', 'Off')
+      ]);
+    }
+
+    function taskRow(week, t) {
+      var value = Object.prototype.hasOwnProperty.call(state.drafts, t.id) ? state.drafts[t.id] : t.evidence;
+      var title = el('div', { class: 'ttitle' }, [document.createTextNode(t.title)]);
+      if (t.optional) title.appendChild(el('span', { class: 'tag', text: 'optional' }));
+      if (t.movedFrom !== undefined && t.movedFrom !== null) {
+        title.appendChild(el('span', { class: 'tag', text: 'from week ' + t.movedFrom }));
+      }
+      var body = [title];
+      if (t.doneWhen) body.push(el('div', { class: 'tmeta', text: 'Done when: ' + t.doneWhen }));
+      if (t.moveReason && t.movedFrom !== undefined && t.movedFrom !== null) {
+        body.push(el('div', { class: 'tmeta', text: 'Moved because: ' + t.moveReason }));
+      }
+      if (t.done && t.track !== 'marking') {
+        body.push(el('input', {
+          class: 'evidence' + (value ? '' : ' needs'),
+          type: 'text',
+          id: 'ev-' + t.id,
+          'data-week': week.id,
+          'data-task': t.id,
+          value: value,
+          placeholder: 'Evidence: a link or a short note',
+          'aria-label': 'Evidence for ' + t.title,
+          autocomplete: 'off'
+        }));
+      }
+      if (t.done && t.doneAt) {
+        var d = new Date(t.doneAt);
+        if (!isNaN(d)) body.push(el('div', { class: 'doneat', text: 'Ticked ' + fmtDate(d) }));
+      }
+      var movable = !t.done && (t.track === 'phd' || t.track === 'income');
+      if (movable && state.moving === t.id) {
+        var rs = el('div', { class: 'reasons' }, [el('span', { class: 'lab', text: 'Move to next week. Why?' })]);
+        REASONS.forEach(function (r) {
+          rs.appendChild(el('button', {
+            class: 'reason',
+            type: 'button',
+            'data-reason': r,
+            'data-task': t.id,
+            'data-week': week.id,
+            text: r
+          }));
+        });
+        rs.appendChild(el('button', { class: 'linkbtn', type: 'button', 'data-cancelmove': '1', text: 'Cancel' }));
+        body.push(rs);
+      } else if (movable) {
+        body.push(el('button', { class: 'linkbtn', type: 'button', 'data-move': t.id, text: 'Move to next week' }));
+      }
+      var btn = el('button', {
+        class: 'check',
+        type: 'button',
+        role: 'checkbox',
+        'aria-checked': t.done ? 'true' : 'false',
+        'aria-label': t.title,
+        'data-toggle': t.id,
+        'data-week': week.id
+      }, [el('i', null, [svgTick()])]);
+      return el('div', { class: 'task' + (t.done ? ' done' : '') }, [
+        btn,
+        el('div', { class: 'tbody' }, body),
+        el('div', { class: 'hrs', text: fmtH(t.hours) + ' h' })
+      ]);
+    }
+
+    function addTaskPanel(week) {
+      var wrap = el('section', { class: 'add-wrap' });
+      if (!state.addingTask) {
+        wrap.appendChild(el('button', {
+          type: 'button',
+          class: 'add-trigger',
+          'data-add-open': '1',
+          text: '+ Add task'
+        }));
+        return wrap;
+      }
+
+      var form = el('form', { class: 'add-form', 'data-add-form': week.id }, [
+        el('h3', { text: 'Add task to Week ' + week.n }),
+        el('div', { class: 'form-grid' }, [
+          el('div', { class: 'field full' }, [
+            el('label', { for: 'new-title', text: 'Task title' }),
+            el('input', {
+              id: 'new-title',
+              name: 'title',
+              type: 'text',
+              required: true,
+              placeholder: 'e.g., Run ablation on conditioning channels',
+              autocomplete: 'off'
+            })
+          ]),
+          el('div', { class: 'field' }, [
+            el('label', { for: 'new-track', text: 'Track' }),
+            el('select', { id: 'new-track', name: 'track' }, [
+              el('option', { value: 'phd', text: 'PhD article' }),
+              el('option', { value: 'marking', text: 'Marking' }),
+              el('option', { value: 'income', text: 'Income and portfolio' }),
+              el('option', { value: 'review', text: 'Weekly review' })
+            ])
+          ]),
+          el('div', { class: 'field' }, [
+            el('label', { for: 'new-hours', text: 'Hours (max 3 h recommended)' }),
+            el('input', {
+              id: 'new-hours',
+              name: 'hours',
+              type: 'number',
+              min: '0.5',
+              max: '12',
+              step: '0.5',
+              value: '2',
+              required: true
+            })
+          ]),
+          el('div', { class: 'field full' }, [
+            el('label', { for: 'new-donewhen', text: 'Done when (observable completion criterion)' }),
+            el('input', {
+              id: 'new-donewhen',
+              name: 'doneWhen',
+              type: 'text',
+              placeholder: 'e.g., Metrics logged and commit pushed',
+              autocomplete: 'off'
+            })
+          ]),
+          el('div', { class: 'field full' }, [
+            el('label', { class: 'field-check' }, [
+              el('input', { type: 'checkbox', name: 'optional' }),
+              document.createTextNode('Mark as optional')
+            ])
+          ])
+        ]),
+        el('div', { class: 'form-actions' }, [
+          el('button', { type: 'submit', class: 'btn-primary', text: 'Add task' }),
+          el('button', { type: 'button', class: 'linkbtn', 'data-add-cancel': '1', text: 'Cancel' })
+        ])
+      ]);
+      wrap.appendChild(form);
+      return wrap;
+    }
+
+    function renderWeeksView(frag) {
+      var cur = currentWeekN();
+      var tabs = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Weeks' });
+      state.weeks.forEach(function (w) {
+        var tt = totals(w);
+        var prog = tt.n ? tt.nd + '/' + tt.n : (tt.mN ? '' : '-');
+        if (tt.mN) prog += (prog ? ' ' : '') + 'm' + tt.mD + '/' + tt.mN;
+        tabs.appendChild(el('button', {
+          class: 'tab' + (w.n === cur ? ' now' : ''),
+          type: 'button',
+          role: 'tab',
+          'aria-selected': w.n === state.week ? 'true' : 'false',
+          'data-tab': w.n
+        }, [
+          el('span', { class: 'n', text: 'Wk ' + w.n }),
+          el('span', { class: 'd', text: fmtDate(parseDate(w.start)) }),
+          el('span', { class: 'p', text: prog })
+        ]));
+      });
+      frag.appendChild(tabs);
+
+      var week = weekById(state.week);
+      if (!week) return;
+      var head = [
+        el('h2', { text: 'Week ' + week.n + ': ' + (week.focus || '') }),
+        el('p', { class: 'sub mono', text: fmtDate(parseDate(week.start)) + ' to ' + fmtDate(parseDate(week.end)) })
+      ];
+      if (week.note) head.push(el('p', { class: 'note', text: week.note }));
+      frag.appendChild(el('div', { class: 'weekhead' }, head));
+      frag.appendChild(gauge(week));
+
+      var dl = dayList(week);
+      if (dl) {
+        frag.appendChild(legend());
+        frag.appendChild(dl);
+      }
+
+      var ts = tasksOf(week);
+      if (!ts.length) {
+        frag.appendChild(el('div', { class: 'empty' }, [
+          el('h2', { text: 'No tasks planned yet' }),
+          el('p', { class: 'sub', text: 'Tasks for this week are added at a Friday review once the weeks before it are done.' })
+        ]));
+      }
+
+      TRACK_ORDER.forEach(function (tr) {
+        var list = ts.filter(function (t) { return t.track === tr; });
+        if (!list.length) return;
+        var planned = 0, done = 0, nDone = 0;
+        list.forEach(function (t) {
+          planned += t.hours;
+          if (t.done) {
+            done += t.hours;
+            nDone += 1;
+          }
+        });
+        var summary = tr === 'marking'
+          ? nDone + ' of ' + list.length + ' blocks'
+          : fmtH(done) + ' of ' + fmtH(planned) + ' h';
+        var g = el('section', { class: 'group ' + TRACKS[tr].cls }, [
+          el('div', { class: 'group-head' }, [
+            el('h3', null, [el('span', { class: 'dot' }), document.createTextNode(TRACKS[tr].label)]),
+            el('span', { class: 'mono', text: summary })
+          ])
+        ]);
+        list.forEach(function (t) { g.appendChild(taskRow(week, t)); });
+        frag.appendChild(g);
+      });
+
+      var movedOn = tasksOf(week, true).filter(function (t) { return t.moved; });
+      if (movedOn.length) {
+        var box = el('section', { class: 'moved' }, [el('h3', { text: 'Moved on from this week' })]);
+        movedOn.forEach(function (t) {
+          box.appendChild(el('p', {
+            text: t.title + ' (to week ' + t.movedTo + (t.moveReason ? ', ' + t.moveReason : '') + ')'
+          }));
+        });
+        frag.appendChild(box);
+      }
+
+      frag.appendChild(addTaskPanel(week));
+    }
+
+    function renderSchedule(frag) {
+      var planned = state.weeks.filter(function (w) { return Object.keys(w.days || {}).length; });
+      if (!planned.length) {
+        frag.appendChild(el('div', { class: 'empty' }, [
+          el('h2', { text: 'No schedule loaded' }),
+          el('p', { class: 'sub', text: 'Import a tracker JSON file with day-by-day blocks to view the schedule.' })
+        ]));
+        return;
+      }
+      var hours = 0, blocks = 0, blocksDone = 0;
+      planned.forEach(function (w) {
+        hours += Number(w.cap) || 0;
+        tasksOf(w).forEach(function (t) {
+          if (t.track === 'marking') {
+            blocks += 1;
+            if (t.done) blocksDone += 1;
+          }
+        });
+      });
+      var first = planned[0], last = planned[planned.length - 1];
+      frag.appendChild(el('div', { class: 'weekhead' }, [
+        el('h2', { text: 'Marking and PhD days' }),
+        el('p', { class: 'sub mono', text: fmtDate(parseDate(first.start)) + ' to ' + fmtDate(parseDate(last.end)) }),
+        el('p', {
+          class: 'note',
+          text: fmtH(hours) + ' PhD hours of capacity and ' + blocksDone + ' of ' + blocks +
+            ' marking blocks done. A block is half a day.'
+        })
+      ]));
+      frag.appendChild(legend());
+      planned.forEach(function (w) {
+        var tt = totals(w);
+        var box = el('section', { class: 'weekhead' }, [
+          el('div', { class: 'wkhead' }, [
+            el('h3', { text: 'Week ' + w.n + ': ' + (w.focus || '') }),
+            el('span', {
+              class: 'mono sub',
+              text: fmtDate(parseDate(w.start)) + ' to ' + fmtDate(parseDate(w.end)) +
+                ', cap ' + fmtH(Number(w.cap) || 0) + ' h, marking ' + tt.mD + '/' + tt.mN
+            })
+          ]),
+          dayList(w)
+        ]);
+        frag.appendChild(box);
+      });
+    }
+
+    function renderMilestones(frag) {
+      var list = state.milestones.slice().sort(function (a, b) {
+        return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+      });
+      if (!list.length) {
+        frag.appendChild(el('div', { class: 'empty' }, [
+          el('h2', { text: 'No milestones loaded' }),
+          el('p', { class: 'sub', text: 'Import a tracker JSON file with milestones to track deadlines.' })
+        ]));
+        return;
+      }
+      var box = el('section', { class: 'mlist' });
+      var year = null, t0 = today();
+      list.forEach(function (m) {
+        var d = parseDate(m.date);
+        if (d.getFullYear() !== year) {
+          year = d.getFullYear();
+          box.appendChild(el('div', { class: 'myear', text: String(year) }));
+        }
+        var diff = daysBetween(t0, d), chipText, chipCls = 'chip';
+        if (m.done) { chipText = 'Done'; chipCls += ' ok'; }
+        else if (diff < 0) { chipText = 'Overdue by ' + (-diff) + ' d'; chipCls += ' late'; }
+        else if (diff === 0) { chipText = 'Today'; }
+        else if (diff < 21) { chipText = 'In ' + diff + ' d'; }
+        else { chipText = 'In ' + Math.round(diff / 7) + ' wk'; }
+        var trCls = TRACKS[m.track] ? TRACKS[m.track].cls : '';
+        var btn = el('button', {
+          class: 'check ' + trCls,
+          type: 'button',
+          role: 'checkbox',
+          'aria-checked': m.done ? 'true' : 'false',
+          'aria-label': m.title,
+          'data-ms': m.id
+        }, [el('i', null, [svgTick()])]);
+        box.appendChild(el('div', { class: 'mrow ' + trCls + (m.done ? ' done' : '') }, [
+          btn,
+          el('span', { class: 'mdate', text: fmtDate(d) + ' ' + String(d.getFullYear()).slice(2) }),
+          el('span', { class: 'mtitle', text: m.title }),
+          el('span', { class: chipCls, text: chipText })
+        ]));
+      });
+      frag.appendChild(box);
+    }
+
+    function renderFacts() {
+      factsEl.textContent = '';
+      var target = null;
+      state.milestones.forEach(function (m) {
+        if (!target && /^Article 1 submitted/.test(m.title || '')) target = m;
+      });
+      if (target) {
+        var days = daysBetween(today(), parseDate(target.date));
+        factsEl.appendChild(el('div', { class: 'fact' }, [
+          el('b', { text: String(Math.max(days, 0)) }),
+          el('span', { text: 'days to article 1 submission, ' + fmtDate(parseDate(target.date)) + ' ' + parseDate(target.date).getFullYear() })
+        ]));
+      }
+      var w = weekById(state.week);
+      if (w) {
+        var tt = totals(w);
+        factsEl.appendChild(el('div', { class: 'fact' }, [
+          el('b', { text: tt.nd + ' of ' + tt.n }),
+          el('span', { text: 'PhD tasks done in week ' + w.n })
+        ]));
+      }
+      var allDone = 0, allN = 0, mDone = 0, mAll = 0;
+      state.weeks.forEach(function (x) {
+        var q = totals(x);
+        allDone += q.nd;
+        allN += q.n;
+        mDone += q.mD;
+        mAll += q.mN;
+      });
+      if (allN) {
+        factsEl.appendChild(el('div', { class: 'fact' }, [
+          el('b', { text: allDone + ' of ' + allN }),
+          el('span', { text: 'PhD tasks done across planned weeks' })
+        ]));
+      }
+      if (mAll) {
+        factsEl.appendChild(el('div', { class: 'fact' }, [
+          el('b', { text: mDone + ' of ' + mAll }),
+          el('span', { text: 'marking blocks done' })
+        ]));
+      }
+    }
+
+    function render() {
+      var active = document.activeElement;
+      var keepId = null, selStart = null, selEnd = null;
+      if (active && active.classList && active.classList.contains('evidence')) {
+        keepId = active.id;
+        try { selStart = active.selectionStart; selEnd = active.selectionEnd; } catch (e) {}
+      }
+      var oldTabs = app.querySelector('.tabs');
+      var tabScroll = oldTabs ? oldTabs.scrollLeft : 0;
+
+      renderFacts();
+      var frag = document.createDocumentFragment();
+      var sw = el('div', { class: 'switch', role: 'group', 'aria-label': 'View' }, [
+        el('button', { type: 'button', 'data-view': 'weeks', 'aria-pressed': state.view === 'weeks' ? 'true' : 'false', text: 'Weeks' }),
+        el('button', { type: 'button', 'data-view': 'schedule', 'aria-pressed': state.view === 'schedule' ? 'true' : 'false', text: 'Schedule' }),
+        el('button', { type: 'button', 'data-view': 'milestones', 'aria-pressed': state.view === 'milestones' ? 'true' : 'false', text: 'Milestones' })
+      ]);
+      frag.appendChild(sw);
+
+      if (state.view === 'weeks') renderWeeksView(frag);
+      else if (state.view === 'schedule') renderSchedule(frag);
+      else renderMilestones(frag);
+
+      app.textContent = '';
+      var holder = el('div', { style: 'display:grid;gap:20px' });
+      holder.appendChild(frag);
+      app.appendChild(holder);
+
+      var newTabs = app.querySelector('.tabs');
+      if (newTabs) {
+        newTabs.scrollLeft = tabScroll;
+        if (state.scrollTab) {
+          var sel = newTabs.querySelector('[aria-selected="true"]');
+          if (sel && sel.scrollIntoView) sel.scrollIntoView({ inline: 'center', block: 'nearest' });
+          state.scrollTab = false;
+        }
+      }
+      if (keepId) {
+        var again = document.getElementById(keepId);
+        if (again) {
+          again.focus();
+          try { if (selStart !== null) again.setSelectionRange(selStart, selEnd); } catch (e) {}
+        }
+      }
+    }
+
+    /* ---------- Delegated events ---------- */
+    app.addEventListener('click', function (e) {
+      var t = e.target.closest
+        ? e.target.closest('[data-toggle],[data-tab],[data-view],[data-ms],[data-move],[data-reason],[data-cancelmove],[data-add-open],[data-add-cancel]')
+        : null;
+      if (!t) return;
+      if (t.hasAttribute('data-toggle')) {
+        toggleTask(t.getAttribute('data-week'), t.getAttribute('data-toggle'));
+        return;
+      }
+      if (t.hasAttribute('data-ms')) {
+        toggleMilestone(t.getAttribute('data-ms'));
+        return;
+      }
+      if (t.hasAttribute('data-tab')) {
+        state.week = Number(t.getAttribute('data-tab'));
+        state.moving = null;
+        state.addingTask = false;
+        render();
+        return;
+      }
+      if (t.hasAttribute('data-view')) {
+        state.view = t.getAttribute('data-view');
+        state.moving = null;
+        state.addingTask = false;
+        render();
+        return;
+      }
+      if (t.hasAttribute('data-move')) {
+        state.moving = t.getAttribute('data-move');
+        render();
+        return;
+      }
+      if (t.hasAttribute('data-cancelmove')) {
+        state.moving = null;
+        render();
+        return;
+      }
+      if (t.hasAttribute('data-reason')) {
+        var reason = t.getAttribute('data-reason');
+        var taskId = t.getAttribute('data-task');
+        var weekId = t.getAttribute('data-week');
+        state.moving = null;
+        moveTask(weekId, taskId, reason);
+        return;
+      }
+      if (t.hasAttribute('data-add-open')) {
+        state.addingTask = true;
+        render();
+        var titleInput = document.getElementById('new-title');
+        if (titleInput) titleInput.focus();
+        return;
+      }
+      if (t.hasAttribute('data-add-cancel')) {
+        state.addingTask = false;
+        render();
+      }
+    });
+
+    app.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.hasAttribute('data-add-form')) return;
+      e.preventDefault();
+      var weekId = form.getAttribute('data-add-form');
+      var title = (form.elements.title.value || '').trim();
+      if (!title) return;
+      var hours = Number(form.elements.hours.value);
+      if (isNaN(hours) || hours <= 0) hours = 1;
+      addTaskToWeek(weekId, {
+        title: title,
+        track: form.elements.track.value,
+        hours: hours,
+        doneWhen: (form.elements.doneWhen.value || '').trim(),
+        optional: form.elements.optional.checked
+      });
+    });
+
+    app.addEventListener('input', function (e) {
+      var t = e.target;
+      if (t && t.classList && t.classList.contains('evidence')) {
+        state.drafts[t.getAttribute('data-task')] = t.value;
+      }
+    });
+
+    app.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t && t.classList && t.classList.contains('evidence')) {
+        var id = t.getAttribute('data-task');
+        var weekId = t.getAttribute('data-week');
+        var v = t.value;
+        delete state.drafts[id];
+        updateEvidence(weekId, id, v);
+      }
+    });
+
+    /* ---------- Boot ---------- */
+    initTheme();
+    loadSyncConfig();
+    renderResetZone();
+    var initial = loadLocal();
+    state.weeks = initial.weeks;
+    state.milestones = initial.milestones;
+    state.updatedAt = initial.updatedAt;
+    state.week = currentWeekN();
+    state.scrollTab = true;
+    updateSyncUI();
+    render();
+    if (isSyncConnected()) {
+      pullFromGist({ silent: true });
+    }
+  })();
+  </script>
+</body>
+</html>
